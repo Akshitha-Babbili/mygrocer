@@ -139,6 +139,28 @@
       cursor: pointer;
     }
 
+        .remember-row {
+      margin: 0 0 18px;
+    }
+    /*changes made here*/
+    .remember-row label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 400;
+      cursor: pointer;
+    }
+
+    .remember-row input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      accent-color: var(--forest);
+      cursor: pointer;
+    }
+
     .message {
       display: none;
       padding: 11px 12px;
@@ -260,6 +282,13 @@
               id="togglePassword"
             >Show</button>
           </div>
+          <!-- changes made - added new checkbox -->
+          <div class="remember-row">
+          <label>
+            <input type="checkbox" id="rememberMe">
+            Remember me on this device
+          </label>
+        </div>
         </div>
 
         <button type="submit" class="login-button">
