@@ -1,0 +1,44 @@
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out MyGrocer source code'
+                checkout scm
+            }
+        }
+
+        stage('Verify Kubernetes Access') {
+            steps {
+                bat 'kubectl config current-context'
+                bat 'kubectl get nodes'
+            }
+        }
+
+        stage('Deploy MyGrocer') {
+            steps {
+                bat 'kubectl apply -f k8s-deployment.yaml'
+                bat 'kubectl apply -f k8s-service.yaml'
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                bat 'kubectl rollout status deployment/mygrocer-deployment --timeout=120s'
+                bat 'kubectl get pods'
+                bat 'kubectl get service mygrocer-service'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'MyGrocer Kubernetes deployment completed successfully.'
+        }
+        failure {
+            echo 'Deployment failed. Check Console Output.'
+        }
+    }
+}
