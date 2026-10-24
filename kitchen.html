@@ -1,0 +1,1128 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyGrocer | Smart Kitchen</title>
+
+  <style>
+    :root {
+      --ivory: #FAF9F2;
+      --forest: #234B3A;
+      --sage: #A8BE91;
+      --butter: #F0D987;
+      --ink: #292E29;
+      --white: #FFFFFF;
+      --muted: #777D73;
+      --border: #E5E7DC;
+      --coral: #D96B6B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .navbar {
+      min-height: 70px;
+      padding: 0 6%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      color: var(--forest);
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.7px;
+      text-decoration: none;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--forest);
+    }
+
+    .logout-button {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--white);
+      color: var(--forest);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .container {
+      width: min(1000px, 90%);
+      margin: 32px auto 55px;
+    }
+
+    .page-intro {
+      padding: 25px 27px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: #EEF2E5;
+      border: 1px solid #E0E8D7;
+      border-radius: 18px;
+      margin-bottom: 27px;
+    }
+
+    .page-intro h1 {
+      color: var(--forest);
+      font-size: clamp(23px, 3vw, 30px);
+      margin-bottom: 8px;
+    }
+
+    .page-intro p {
+      max-width: 540px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .intro-emoji {
+      font-size: 43px;
+      flex-shrink: 0;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .section-heading h2 {
+      color: var(--forest);
+      font-size: 21px;
+    }
+
+    .section-heading p {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .recipe-list {
+      overflow: hidden;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .recipe-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 16px 18px;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      background: var(--white);
+      text-align: left;
+      transition: background 0.2s;
+    }
+
+    .recipe-row:last-child {
+      border-bottom: none;
+    }
+
+    .recipe-row:hover,
+    .recipe-row.selected {
+      background: #F4F6EE;
+    }
+
+    .recipe-emoji {
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      background: #F1F3E9;
+      border-radius: 12px;
+      font-size: 24px;
+    }
+
+    .recipe-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recipe-name strong {
+      display: block;
+      color: var(--ink);
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .recipe-name span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .recipe-arrow {
+      color: var(--forest);
+      font-size: 19px;
+      transition: transform 0.2s;
+    }
+
+    .recipe-row.selected .recipe-arrow {
+      transform: rotate(90deg);
+    }
+
+    .recipe-details {
+      display: none;
+      padding: 20px;
+      background: #FDFDF9;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .recipe-details.open {
+      display: block;
+    }
+
+    .recipe-details h3 {
+      color: var(--forest);
+      font-size: 14px;
+      margin: 15px 0 9px;
+    }
+
+    .recipe-details h3:first-child {
+      margin-top: 0;
+    }
+
+    .recipe-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .meta-pill {
+      padding: 6px 9px;
+      border-radius: 20px;
+      background: #EDF2E5;
+      color: var(--forest);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .ingredient-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .ingredient-list li {
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--white);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .ingredient-list li.available {
+      border-color: #D4E4C9;
+      background: #F0F6EA;
+    }
+
+    .ingredient-list li.missing {
+      border-color: #F0DDB0;
+      background: #FFF9E9;
+    }
+
+    .ingredient-status {
+      display: block;
+      margin-top: 3px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .available .ingredient-status {
+      color: var(--forest);
+    }
+
+    .missing .ingredient-status {
+      color: #87631A;
+    }
+
+    .instructions {
+      padding-left: 20px;
+      color: var(--ink);
+    }
+
+    .instructions li {
+      padding-left: 4px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .recipe-actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .primary-button {
+      padding: 10px 13px;
+      border: none;
+      border-radius: 9px;
+      background: var(--forest);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .primary-button:hover {
+      background: #315E49;
+    }
+
+    .secondary-button {
+      padding: 10px 13px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--white);
+      color: var(--forest);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .shopping-panel {
+      padding: 22px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 15px;
+    }
+
+    .shopping-form {
+      display: flex;
+      gap: 9px;
+      margin-bottom: 17px;
+    }
+
+    .shopping-form input {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      font-size: 13px;
+    }
+
+    .shopping-form input:focus {
+      border-color: var(--forest);
+    }
+
+    .shopping-list {
+      list-style: none;
+    }
+
+    .shopping-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .shopping-item:last-child {
+      border-bottom: none;
+    }
+
+    .shopping-item input[type="checkbox"] {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--forest);
+      flex-shrink: 0;
+    }
+
+    .shopping-item-name {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    .shopping-item.purchased .shopping-item-name {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .delete-item {
+      padding: 6px 9px;
+      border: 1px solid #F1D2CC;
+      border-radius: 8px;
+      background: #FFF0EC;
+      color: #A33D2D;
+      font-size: 11px;
+    }
+
+    .empty-state {
+      padding: 24px 12px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .empty-state span {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .shopping-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .shopping-footer p {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .message {
+      display: none;
+      margin-bottom: 15px;
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 13px;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      background: #FFF0EC;
+      color: #A33D2D;
+    }
+
+    .message.success {
+      background: #EDF5E8;
+      color: var(--forest);
+    }
+
+    @media (max-width: 650px) {
+      .navbar {
+        padding: 15px 5%;
+        flex-wrap: wrap;
+      }
+
+      .logo {
+        font-size: 21px;
+      }
+
+      .nav-right {
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .nav-link {
+        font-size: 12px;
+      }
+
+      .logout-button {
+        padding: 8px 10px;
+      }
+
+      .container {
+        width: 92%;
+        margin-top: 20px;
+      }
+
+      .page-intro {
+        padding: 20px;
+      }
+
+      .intro-emoji {
+        font-size: 34px;
+      }
+
+      .ingredient-list {
+        grid-template-columns: 1fr;
+      }
+
+      .shopping-panel {
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .shopping-form {
+        flex-direction: column;
+      }
+
+      .shopping-form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar">
+    <a class="logo" href="dashboard.html">🥬 MyGrocer</a>
+
+    <div class="nav-right">
+      <a class="nav-link" href="dashboard.html">Dashboard</a>
+      <a class="nav-link active" href="kitchen.html">Smart Kitchen</a>
+      <button class="logout-button" id="logoutButton">Log out</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="page-intro">
+      <div>
+        <h1>What's cooking? 🍳</h1>
+        <p>
+          Find recipes using your groceries, check missing ingredients,
+          and keep your shopping list ready.
+        </p>
+      </div>
+      <div class="intro-emoji" aria-hidden="true">🥗</div>
+    </section>
+
+    <div id="pageMessage" class="message" role="status"
+         aria-live="polite"></div>
+
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <h2>Recipe corner</h2>
+          <p>Choose a recipe to see ingredients and cooking steps.</p>
+        </div>
+      </div>
+
+      <div class="recipe-list" id="recipeList"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <h2>My shopping list 🛒</h2>
+          <p>Add missing ingredients or groceries you need.</p>
+        </div>
+      </div>
+
+      <div class="shopping-panel">
+        <form class="shopping-form" id="shoppingForm">
+          <input
+            type="text"
+            id="shoppingInput"
+            placeholder="Add an item, e.g. onions"
+            maxlength="80"
+            required
+          >
+          <button class="primary-button" type="submit">+ Add item</button>
+        </form>
+
+        <ul class="shopping-list" id="shoppingList"></ul>
+
+        <div class="shopping-footer">
+          <p id="shoppingSummary">0 items remaining</p>
+          <button class="secondary-button" id="clearPurchasedButton"
+                  type="button">Clear purchased</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    "use strict";
+
+    const USER_KEY = "mygrocer_user";
+    const SESSION_KEY = "mygrocer_session";
+    const INVENTORY_KEY = "mygrocer_inventory";
+    const SHOPPING_KEY = "mygrocer_shopping_list";
+
+    const pageMessage = document.getElementById("pageMessage");
+    const recipeList = document.getElementById("recipeList");
+    const shoppingList = document.getElementById("shoppingList");
+
+    let groceries = [];
+    let shoppingItems = [];
+    let messageTimer = null;
+
+    const recipes = [
+      {
+        id: "salad",
+        name: "Fresh Garden Salad",
+        emoji: "🥗",
+        time: 10,
+        difficulty: "Easy",
+        ingredients: [
+          { name: "Tomato", amount: "2 medium" },
+          { name: "Cucumber", amount: "1 medium" },
+          { name: "Lemon", amount: "1/2 lemon" },
+          { name: "Salt", amount: "To taste" }
+        ],
+        instructions: [
+          "Wash the vegetables thoroughly.",
+          "Chop the tomatoes and cucumber into bite-sized pieces.",
+          "Mix them in a bowl with lemon juice and a little salt.",
+          "Serve fresh. Add other vegetables you have available."
+        ]
+      },
+      {
+        id: "omelette",
+        name: "Simple Veggie Omelette",
+        emoji: "🍳",
+        time: 12,
+        difficulty: "Easy",
+        ingredients: [
+          { name: "Egg", amount: "2 eggs" },
+          { name: "Onion", amount: "1 small" },
+          { name: "Tomato", amount: "1 small" },
+          { name: "Salt", amount: "To taste" }
+        ],
+        instructions: [
+          "Wash and finely chop the onion and tomato.",
+          "Beat the eggs with salt in a bowl.",
+          "Mix in the chopped vegetables.",
+          "Cook in a lightly oiled pan until the egg is set on both sides."
+        ]
+      },
+      {
+        id: "pasta",
+        name: "Quick Tomato Pasta",
+        emoji: "🍝",
+        time: 20,
+        difficulty: "Easy",
+        ingredients: [
+          { name: "Pasta", amount: "1 cup" },
+          { name: "Tomato", amount: "2 medium" },
+          { name: "Onion", amount: "1 small" },
+          { name: "Garlic", amount: "2 cloves" }
+        ],
+        instructions: [
+          "Cook pasta according to its package instructions and drain.",
+          "Chop the onion, tomatoes and garlic.",
+          "Cook the onion and garlic in a little oil, then add the tomatoes.",
+          "Simmer until saucy, mix in the pasta and serve hot."
+        ]
+      },
+      {
+        id: "sandwich",
+        name: "Cheese & Veggie Sandwich",
+        emoji: "🥪",
+        time: 10,
+        difficulty: "Easy",
+        ingredients: [
+          { name: "Bread", amount: "2 slices" },
+          { name: "Cheese", amount: "2 slices" },
+          { name: "Tomato", amount: "1 small" },
+          { name: "Cucumber", amount: "1/2 medium" }
+        ],
+        instructions: [
+          "Wash and slice the tomato and cucumber.",
+          "Place cheese and vegetables between the bread slices.",
+          "Toast in a pan or sandwich maker until lightly golden.",
+          "Cut in half and serve."
+        ]
+      },
+      {
+        id: "pancakes",
+        name: "Easy Banana Pancakes",
+        emoji: "🥞",
+        time: 15,
+        difficulty: "Easy",
+        ingredients: [
+          { name: "Banana", amount: "1 ripe" },
+          { name: "Egg", amount: "1 egg" },
+          { name: "Milk", amount: "1/4 cup" },
+          { name: "Flour", amount: "1/2 cup" }
+        ],
+        instructions: [
+          "Mash the ripe banana in a bowl.",
+          "Mix in the egg, milk and flour until combined.",
+          "Pour small portions into a lightly greased warm pan.",
+          "Cook both sides until golden and serve warm."
+        ]
+      }
+    ];
+
+    function checkSession() {
+      try {
+        const user = JSON.parse(localStorage.getItem(USER_KEY) || "null");
+        const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+
+        if (
+          !user ||
+          !session ||
+          session.loggedIn !== true ||
+          typeof user.email !== "string" ||
+          typeof session.email !== "string" ||
+          user.email.toLowerCase() !== session.email.toLowerCase()
+        ) {
+          window.location.replace("index.html");
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        window.location.replace("index.html");
+        return false;
+      }
+    }
+
+    function showPageMessage(message, type) {
+      pageMessage.textContent = message;
+      pageMessage.className = "message show " + type;
+
+      if (messageTimer) clearTimeout(messageTimer);
+
+      messageTimer = setTimeout(() => {
+        pageMessage.textContent = "";
+        pageMessage.className = "message";
+      }, 4000);
+    }
+
+    function loadGroceries() {
+      try {
+        const data = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "[]");
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid inventory.");
+        }
+
+        groceries = data.filter(item =>
+          item &&
+          typeof item.name === "string" &&
+          typeof item.expiryDate === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(item.expiryDate)
+        );
+      } catch (error) {
+        groceries = [];
+        showPageMessage(
+          "Could not read your grocery inventory. Check your saved data.",
+          "error"
+        );
+      }
+    }
+
+    function loadShoppingItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SHOPPING_KEY) || "[]");
+
+        if (!Array.isArray(saved)) {
+          throw new Error("Invalid shopping list.");
+        }
+
+        shoppingItems = saved.filter(item =>
+          item &&
+          typeof item.id === "string" &&
+          typeof item.name === "string" &&
+          typeof item.purchased === "boolean"
+        );
+      } catch (error) {
+        shoppingItems = [];
+        showPageMessage(
+          "Could not read your shopping list. Check your saved data.",
+          "error"
+        );
+      }
+    }
+
+    function saveShoppingItems() {
+      localStorage.setItem(SHOPPING_KEY, JSON.stringify(shoppingItems));
+    }
+
+    function todayString() {
+      const now = new Date();
+      return now.getFullYear() + "-" +
+        String(now.getMonth() + 1).padStart(2, "0") + "-" +
+        String(now.getDate()).padStart(2, "0");
+    }
+
+    function isExpired(item) {
+      return item.expiryDate < todayString();
+    }
+
+    function normalize(value) {
+      return value.toLowerCase().replace(/s$/, "").trim();
+    }
+
+    // Only unexpired groceries count as available.
+    function isIngredientAvailable(ingredientName) {
+      const wanted = normalize(ingredientName);
+
+      return groceries.some(item =>
+        !isExpired(item) &&
+        (
+          normalize(item.name) === wanted ||
+          normalize(item.name).includes(wanted) ||
+          wanted.includes(normalize(item.name))
+        )
+      );
+    }
+
+    function addShoppingItem(name) {
+      const cleanName = name.trim();
+
+      if (!cleanName) return false;
+
+      const alreadyExists = shoppingItems.some(item =>
+        item.name.toLowerCase() === cleanName.toLowerCase() &&
+        !item.purchased
+      );
+
+      if (alreadyExists) {
+        showPageMessage("That item is already on your shopping list.", "error");
+        return false;
+      }
+
+      const item = {
+        id: window.crypto && typeof window.crypto.randomUUID === "function"
+          ? window.crypto.randomUUID()
+          : Date.now().toString(36) + Math.random().toString(36).slice(2),
+        name: cleanName,
+        purchased: false
+      };
+
+      shoppingItems.push(item);
+
+      try {
+        saveShoppingItems();
+        renderShoppingList();
+        return true;
+      } catch (error) {
+        shoppingItems.pop();
+        showPageMessage("Could not save your shopping list.", "error");
+        return false;
+      }
+    }
+
+    function renderRecipes() {
+      recipeList.replaceChildren();
+
+      recipes.forEach(recipe => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "recipe-row";
+        row.setAttribute("aria-expanded", "false");
+
+        const emoji = document.createElement("span");
+        emoji.className = "recipe-emoji";
+        emoji.textContent = recipe.emoji;
+
+        const nameBox = document.createElement("span");
+        nameBox.className = "recipe-name";
+
+        const title = document.createElement("strong");
+        title.textContent = recipe.name;
+
+        const summary = document.createElement("span");
+        summary.textContent = recipe.time + " min · " + recipe.difficulty;
+
+        nameBox.append(title, summary);
+
+        const arrow = document.createElement("span");
+        arrow.className = "recipe-arrow";
+        arrow.textContent = "›";
+        arrow.setAttribute("aria-hidden", "true");
+
+        row.append(emoji, nameBox, arrow);
+
+        const details = document.createElement("div");
+        details.className = "recipe-details";
+
+        const meta = document.createElement("div");
+        meta.className = "recipe-meta";
+
+        const timePill = document.createElement("span");
+        timePill.className = "meta-pill";
+        timePill.textContent = "⏱ " + recipe.time + " minutes";
+
+        const difficultyPill = document.createElement("span");
+        difficultyPill.className = "meta-pill";
+        difficultyPill.textContent = recipe.difficulty;
+
+        meta.append(timePill, difficultyPill);
+
+        const ingredientHeading = document.createElement("h3");
+        ingredientHeading.textContent = "Ingredients";
+
+        const ingredientList = document.createElement("ul");
+        ingredientList.className = "ingredient-list";
+
+        let missingIngredients = [];
+
+        recipe.ingredients.forEach(ingredient => {
+          const available = isIngredientAvailable(ingredient.name);
+          const li = document.createElement("li");
+          li.className = available ? "available" : "missing";
+
+          const ingredientText = document.createElement("span");
+          ingredientText.textContent =
+            ingredient.name + " · " + ingredient.amount;
+
+          const status = document.createElement("span");
+          status.className = "ingredient-status";
+          status.textContent = available
+            ? "✓ In your groceries"
+            : "＋ Need to buy";
+
+          li.append(ingredientText, status);
+          ingredientList.appendChild(li);
+
+          if (!available) missingIngredients.push(ingredient.name);
+        });
+
+        const instructionsHeading = document.createElement("h3");
+        instructionsHeading.textContent = "How to prepare";
+
+        const instructions = document.createElement("ol");
+        instructions.className = "instructions";
+
+        recipe.instructions.forEach(step => {
+          const li = document.createElement("li");
+          li.textContent = step;
+          instructions.appendChild(li);
+        });
+
+        const actions = document.createElement("div");
+        actions.className = "recipe-actions";
+
+        if (missingIngredients.length > 0) {
+          const addMissingButton = document.createElement("button");
+          addMissingButton.type = "button";
+          addMissingButton.className = "primary-button";
+          addMissingButton.textContent = "Add missing ingredients";
+
+          addMissingButton.addEventListener("click", () => {
+            let added = 0;
+
+            missingIngredients.forEach(name => {
+              if (addShoppingItem(name)) added++;
+            });
+
+            if (added > 0) {
+              showPageMessage(
+                added + " missing ingredient(s) added to your list.",
+                "success"
+              );
+            }
+          });
+
+          actions.appendChild(addMissingButton);
+        } else {
+          const readyMessage = document.createElement("span");
+          readyMessage.className = "meta-pill";
+          readyMessage.textContent = "🌿 All ingredients available";
+          actions.appendChild(readyMessage);
+        }
+
+        details.append(
+          meta,
+          ingredientHeading,
+          ingredientList,
+          instructionsHeading,
+          instructions,
+          actions
+        );
+
+        row.addEventListener("click", () => {
+          const wasOpen = details.classList.contains("open");
+
+          document.querySelectorAll(".recipe-details.open").forEach(panel => {
+            panel.classList.remove("open");
+          });
+
+          document.querySelectorAll(".recipe-row.selected").forEach(activeRow => {
+            activeRow.classList.remove("selected");
+            activeRow.setAttribute("aria-expanded", "false");
+          });
+
+          if (!wasOpen) {
+            details.classList.add("open");
+            row.classList.add("selected");
+            row.setAttribute("aria-expanded", "true");
+          }
+        });
+
+        recipeList.append(row, details);
+      });
+    }
+
+    function renderShoppingList() {
+      shoppingList.replaceChildren();
+
+      if (shoppingItems.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "empty-state";
+
+        const emoji = document.createElement("span");
+        emoji.textContent = "🛍️";
+
+        const text = document.createElement("p");
+        text.textContent = "Your shopping list is empty. Add something you need!";
+
+        empty.append(emoji, text);
+        shoppingList.appendChild(empty);
+      } else {
+        shoppingItems.forEach(item => {
+          const li = document.createElement("li");
+          li.className = "shopping-item" +
+            (item.purchased ? " purchased" : "");
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.checked = item.purchased;
+          checkbox.setAttribute("aria-label", "Mark " + item.name + " as purchased");
+
+          checkbox.addEventListener("change", () => {
+            const previous = item.purchased;
+            item.purchased = checkbox.checked;
+
+            try {
+              saveShoppingItems();
+              renderShoppingList();
+            } catch (error) {
+              item.purchased = previous;
+              renderShoppingList();
+              showPageMessage("Could not update shopping list.", "error");
+            }
+          });
+
+          const name = document.createElement("span");
+          name.className = "shopping-item-name";
+          name.textContent = item.name;
+
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.className = "delete-item";
+          deleteButton.textContent = "Remove";
+          deleteButton.setAttribute("aria-label", "Remove " + item.name);
+
+          deleteButton.addEventListener("click", () => {
+            const previous = shoppingItems;
+            shoppingItems = shoppingItems.filter(entry => entry.id !== item.id);
+
+            try {
+              saveShoppingItems();
+              renderShoppingList();
+            } catch (error) {
+              shoppingItems = previous;
+              renderShoppingList();
+              showPageMessage("Could not remove this item.", "error");
+            }
+          });
+
+          li.append(checkbox, name, deleteButton);
+          shoppingList.appendChild(li);
+        });
+      }
+
+      const remaining = shoppingItems.filter(item => !item.purchased).length;
+      document.getElementById("shoppingSummary").textContent =
+        remaining + " item(s) remaining · " +
+        shoppingItems.filter(item => item.purchased).length + " purchased";
+    }
+
+    document.getElementById("shoppingForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const input = document.getElementById("shoppingInput");
+      const name = input.value.trim();
+
+      if (addShoppingItem(name)) {
+        input.value = "";
+        showPageMessage("Added to your shopping list.", "success");
+      }
+    });
+
+    document.getElementById("clearPurchasedButton").addEventListener("click", () => {
+      const purchased = shoppingItems.filter(item => item.purchased);
+
+      if (purchased.length === 0) {
+        showPageMessage("There are no purchased items to clear.", "error");
+        return;
+      }
+
+      if (!confirm("Remove all purchased items from the shopping list?")) return;
+
+      const previous = shoppingItems;
+      shoppingItems = shoppingItems.filter(item => !item.purchased);
+
+      try {
+        saveShoppingItems();
+        renderShoppingList();
+        showPageMessage("Purchased items cleared.", "success");
+      } catch (error) {
+        shoppingItems = previous;
+        renderShoppingList();
+        showPageMessage("Could not update your shopping list.", "error");
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", () => {
+      if (!confirm("Are you sure you want to log out?")) return;
+
+      localStorage.removeItem(SESSION_KEY);
+      window.location.replace("index.html");
+    });
+
+    if (checkSession()) {
+      loadGroceries();
+      loadShoppingItems();
+      renderRecipes();
+      renderShoppingList();
+    }
+  </script>
+</body>
+</html>

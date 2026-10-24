@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyGrocer | Welcome Back</title>
+
+  <style>
+    :root {
+      --ivory: #FAF9F2;
+      --forest: #234B3A;
+      --sage: #A8BE91;
+      --butter: #F0D987;
+      --ink: #292E29;
+      --white: #FFFFFF;
+      --muted: #777D73;
+      --border: #E5E7DC;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: var(--ivory);
+      color: var(--ink);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .brand-icon {
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 12px;
+      background: var(--sage);
+      border-radius: 20px;
+      font-size: 32px;
+      transform: rotate(-4deg);
+    }
+
+    .brand h1 {
+      color: var(--forest);
+      font-size: 32px;
+      letter-spacing: -1px;
+    }
+
+    .brand p {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .login-card {
+      padding: 32px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: 0 14px 40px rgba(35, 75, 58, 0.07);
+    }
+
+    .login-card h2 {
+      font-size: 23px;
+      color: var(--forest);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #FDFDF9;
+      color: var(--ink);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--forest);
+      box-shadow: 0 0 0 3px rgba(35, 75, 58, 0.09);
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 65px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: var(--forest);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .message {
+      display: none;
+      padding: 11px 12px;
+      margin-bottom: 16px;
+      border-radius: 9px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      display: block;
+      background: #FFF0EC;
+      color: #A33D2D;
+    }
+
+    .message.success {
+      display: block;
+      background: #EDF5E8;
+      color: var(--forest);
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 11px;
+      background: var(--forest);
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .login-button:hover {
+      background: #315E49;
+      transform: translateY(-1px);
+    }
+
+    .register-link {
+      margin-top: 22px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .register-link a {
+      color: var(--forest);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-note {
+      margin-top: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 25px 21px;
+      }
+
+      .brand h1 {
+        font-size: 29px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-wrapper">
+    <header class="brand">
+      <div class="brand-icon" aria-hidden="true">🥬</div>
+      <h1>MyGrocer</h1>
+      <p>Less waste, more taste.</p>
+    </header>
+
+    <section class="login-card">
+      <h2>Welcome back!</h2>
+      <p class="subtitle">
+        Your kitchen is waiting. Sign in to manage your groceries
+        and keep every ingredient fresh.
+      </p>
+
+      <div id="message" class="message" role="alert"
+           aria-live="polite"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="you@example.com"
+            autocomplete="username"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input
+              type="password"
+              id="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            >
+            <button
+              type="button"
+              class="toggle-password"
+              id="togglePassword"
+            >Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="login-button">
+          Sign in →
+        </button>
+      </form>
+
+      <p class="register-link">
+        New to MyGrocer?
+        <a href="register.html">Create an account</a>
+      </p>
+    </section>
+
+    <p class="footer-note">
+      🌱 A little planning makes a fresher kitchen.
+    </p>
+  </main>
+
+  <script>
+    "use strict";
+
+    const loginForm = document.getElementById("loginForm");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
+    const messageBox = document.getElementById("message");
+
+    function showMessage(message, type) {
+      messageBox.textContent = message;
+      messageBox.className = "message " + type;
+    }
+
+    function clearMessage() {
+      messageBox.textContent = "";
+      messageBox.className = "message";
+    }
+
+    async function hashPassword(password) {
+      if (!window.crypto || !window.crypto.subtle) {
+        throw new Error(
+          "Secure password hashing is unavailable. Open this page using localhost."
+        );
+      }
+
+      const encoded = new TextEncoder().encode(password);
+      const digest = await crypto.subtle.digest("SHA-256", encoded);
+
+      return Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    togglePassword.addEventListener("click", function () {
+      const isHidden = passwordInput.type === "password";
+
+      passwordInput.type = isHidden ? "text" : "password";
+      togglePassword.textContent = isHidden ? "Hide" : "Show";
+    });
+
+    loginForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      clearMessage();
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage("Please enter your email and password.", "error");
+        return;
+      }
+
+      let user;
+
+      try {
+        const storedUser = localStorage.getItem("mygrocer_user");
+
+        if (!storedUser) {
+          showMessage(
+            "No account found. Please create your account first.",
+            "error"
+          );
+          return;
+        }
+
+        user = JSON.parse(storedUser);
+
+        if (
+          !user ||
+          typeof user.email !== "string" ||
+          typeof user.passwordHash !== "string"
+        ) {
+          showMessage(
+            "Your saved account data is invalid. Please register again.",
+            "error"
+          );
+          return;
+        }
+      } catch (error) {
+        showMessage(
+          "Could not read your saved account. Please check your browser storage.",
+          "error"
+        );
+        return;
+      }
+
+      if (user.email.trim().toLowerCase() !== email) {
+        showMessage("No account found with this email address.", "error");
+        return;
+      }
+
+      try {
+        const enteredHash = await hashPassword(password);
+
+        if (enteredHash !== user.passwordHash) {
+          showMessage("Incorrect password. Please try again.", "error");
+          return;
+        }
+
+        localStorage.setItem(
+          "mygrocer_session",
+          JSON.stringify({
+            email: user.email,
+            loggedIn: true
+          })
+        );
+
+        window.location.href = "dashboard.html";
+      } catch (error) {
+        showMessage(
+          error.message || "Unable to sign in. Please try again.",
+          "error"
+        );
+      }
+    });
+  </script>
+</body>
+</html>
