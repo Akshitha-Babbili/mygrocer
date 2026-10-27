@@ -18,4 +18,35 @@ spec:
           image: mygrocer-app:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 80
+            - containerPort: 8000
+          env:
+            - name: PGHOST
+              value: "host.docker.internal"
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: "mygrocer_db"
+            - name: PGUSER
+              value: "postgres"
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mygrocer-db-secret
+                  key: PGPASSWORD
+            - name: FLASK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mygrocer-db-secret
+                  key: FLASK_SECRET_KEY
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20

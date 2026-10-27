@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MyGrocer — Shopping List</title>
+<style>
+  :root{
+    --ivory:#FAF9F2; --forest:#234B3A; --sage:#A8BE91;
+    --butter:#F0D987; --ink:#292E29; --white:#ffffff;
+    --danger:#B23A2E; --muted:#6B756B;
+    --shadow:0 8px 24px rgba(35,75,58,.10);
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:var(--ivory); color:var(--ink); min-height:100vh;
+  }
+  header.top{
+    background:var(--forest); color:var(--ivory);
+    padding:16px 24px; display:flex; align-items:center; gap:16px;
+    box-shadow:var(--shadow); position:sticky; top:0; z-index:5;
+  }
+  header.top .logo{font-size:1.25rem; font-weight:800; letter-spacing:.4px}
+  header.top .logo span{color:var(--butter)}
+  nav.links{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap}
+  nav.links a{
+    color:var(--ivory); text-decoration:none; padding:8px 12px; border-radius:10px;
+    font-size:.9rem; opacity:.9; transition:background .15s;
+  }
+  nav.links a:hover{background:rgba(255,255,255,.12)}
+  nav.links a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
+  nav.links button{
+    background:transparent; color:var(--ivory); border:1px solid rgba(255,255,255,.4);
+    padding:8px 12px; border-radius:10px; cursor:pointer; font-size:.9rem;
+  }
+  nav.links button:hover{background:rgba(255,255,255,.12)}
+
+  main.wrap{max-width:900px; margin:0 auto; padding:32px 24px 60px}
+  h1{margin:0 0 6px; color:var(--forest); font-size:1.7rem}
+  .sub{margin:0 0 24px; color:var(--muted)}
+
+  .stats{display:grid; gap:14px; grid-template-columns:repeat(3,1fr); margin-bottom:22px}
+  .stat{
+    background:var(--white); border-radius:var(--radius); padding:16px;
+    box-shadow:var(--shadow); border-left:5px solid var(--sage); text-align:center;
+  }
+  .stat .lbl{font-size:.75rem; text-transform:uppercase; color:var(--muted); letter-spacing:.05em}
+  .stat .val{font-size:1.7rem; font-weight:800; color:var(--forest); margin-top:4px}
+  .stat.warn{border-left-color:var(--butter)}
+  .stat.done{border-left-color:var(--sage); opacity:.9}
+
+  form.add{
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:18px; display:grid; gap:12px; grid-template-columns:2fr 1fr auto;
+    align-items:end; margin-bottom:22px;
+  }
+  form.add label{display:block; font-weight:600; font-size:.85rem; margin-bottom:6px}
+  form.add input{
+    width:100%; padding:11px 12px; font-size:1rem;
+    border:1.5px solid #dfe4dc; border-radius:12px; outline:none;
+    background:#fff; color:var(--ink); transition:border .15s, box-shadow .15s;
+  }
+  form.add input:focus{border-color:var(--sage); box-shadow:0 0 0 3px rgba(168,190,145,.35)}
+  button.primary{
+    background:var(--forest); color:var(--ivory); border:0; border-radius:12px;
+    padding:12px 18px; font-weight:700; cursor:pointer; font-size:.95rem;
+    transition:background .15s;
+  }
+  button.primary:hover{background:#1b3b2d}
+  button.primary[disabled]{opacity:.6; cursor:wait}
+
+  .msg{min-height:20px; margin:0 0 18px; font-size:.9rem; border-radius:10px; padding:10px 12px; display:none}
+  .msg.show{display:block}
+  .msg.error{background:#fdeceb; color:var(--danger); border:1px solid #f2c6c1}
+  .msg.ok{background:#eaf3e4; color:var(--forest); border:1px solid #cfe0c0}
+
+  h2.section{margin:26px 0 10px; color:var(--forest); font-size:1.05rem;
+             text-transform:uppercase; letter-spacing:.06em}
+  .list{display:grid; gap:10px}
+  .sitem{
+    background:var(--white); border-radius:14px; box-shadow:var(--shadow);
+    padding:14px 16px; display:grid; grid-template-columns:auto 1fr auto auto;
+    gap:12px; align-items:center; border-left:5px solid var(--sage);
+  }
+  .sitem.purchased{opacity:.65; border-left-color:var(--muted)}
+  .sitem.purchased .sname{text-decoration:line-through}
+  .sitem .check{width:20px; height:20px; accent-color:var(--forest); cursor:pointer}
+  .sitem .sname{font-size:1rem; font-weight:600}
+  .sitem .sqty{color:var(--muted); font-size:.9rem}
+  .sitem .actions{display:flex; gap:6px}
+  .sitem .actions button{
+    border:1.5px solid #dfe4dc; background:#fff; border-radius:10px;
+    padding:7px 10px; cursor:pointer; font-size:.85rem; color:var(--ink);
+  }
+  .sitem .actions button:hover{background:#f3f5ef}
+  .sitem .actions button.danger{color:var(--danger); border-color:#f2c6c1}
+  .sitem .actions button.danger:hover{background:#fdeceb}
+
+  .empty{
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:32px; text-align:center; color:var(--muted);
+  }
+  .empty .icon{font-size:2rem; margin-bottom:6px}
+
+  @media (max-width:640px){
+    form.add{grid-template-columns:1fr 1fr}
+    form.add button.primary{grid-column:1 / -1}
+    .stats{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">🌿 MyGrocer<span>.</span></div>
+  <nav class="links">
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/kitchen.html">Kitchen</a>
+    <a href="/shopping.html" class="active">Shopping</a>
+    <button id="logoutBtn" type="button">Sign out</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <h1>Shopping List</h1>
+  <p class="sub">Plan your trip. Tick off what you've bought.</p>
+
+  <section class="stats" aria-label="Shopping summary">
+    <div class="stat"><div class="lbl">Total</div><div class="val" id="statTotal">—</div></div>
+    <div class="stat warn"><div class="lbl">Remaining</div><div class="val" id="statRemaining">—</div></div>
+    <div class="stat done"><div class="lbl">Purchased</div><div class="val" id="statPurchased">—</div></div>
+  </section>
+
+  <form class="add" id="addForm" novalidate>
+    <div>
+      <label for="newName">Item name</label>
+      <input id="newName" type="text" maxlength="150" placeholder="e.g. Olive oil" required />
+    </div>
+    <div>
+      <label for="newQty">Quantity</label>
+      <input id="newQty" type="number" min="1" max="999" value="1" required />
+    </div>
+    <button class="primary" type="submit" id="addBtn">Add item</button>
+  </form>
+
+  <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+  <h2 class="section">To buy</h2>
+  <div id="remainingList" class="list" aria-live="polite"></div>
+
+  <h2 class="section">Purchased</h2>
+  <div id="purchasedList" class="list" aria-live="polite"></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  async function api(path, opts) {
+    opts = opts || {};
+    const headers = Object.assign(
+      { "Accept": "application/json" },
+      opts.headers || {}
+    );
+    const method = (opts.method || "GET").toUpperCase();
+    if (opts.body) headers["Content-Type"] = "application/json";
+    if (method !== "GET" && method !== "HEAD") {
+      headers["X-CSRFToken"] = getCookie("XSRF-TOKEN");
+    }
+    const res = await fetch(path, {
+      method,
+      headers,
+      credentials: "same-origin",
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+    });
+    let data = null;
+    try { data = await res.json(); } catch (e) { data = null; }
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  const msg = document.getElementById("msg");
+  function show(kind, text) {
+    msg.textContent = text || "";
+    msg.className = text ? "msg show " + kind : "msg";
+  }
+  function clearMsg() { msg.className = "msg"; msg.textContent = ""; }
+
+  const remainingList = document.getElementById("remainingList");
+  const purchasedList = document.getElementById("purchasedList");
+
+  function renderEmpty(container, text) {
+    container.replaceChildren();
+    const e = document.createElement("div");
+    e.className = "empty";
+    const ic = document.createElement("div");
+    ic.className = "icon"; ic.textContent = "🛒";
+    const t = document.createElement("div");
+    t.textContent = text;
+    e.append(ic, t);
+    container.appendChild(e);
+  }
+
+  function buildItem(it) {
+    const row = document.createElement("div");
+    row.className = "sitem" + (it.is_purchased ? " purchased" : "");
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "check";
+    cb.checked = !!it.is_purchased;
+    cb.setAttribute("aria-label",
+      it.is_purchased ? "Mark as not purchased" : "Mark as purchased");
+    cb.addEventListener("change", async function () {
+      clearMsg();
+      cb.disabled = true;
+      try {
+        const r = await api("/api/shopping-items/" + it.id, {
+          method: "PATCH",
+          body: { is_purchased: cb.checked },
+        });
+        if (r.status === 401) { window.location.assign("/"); return; }
+        if (r.ok) { await load(); }
+        else {
+          cb.checked = !cb.checked;
+          show("error", (r.data && r.data.error) || "Could not update item.");
+        }
+      } catch (e) {
+        cb.checked = !cb.checked;
+        show("error", "Network error while updating.");
+      } finally {
+        cb.disabled = false;
+      }
+    });
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "sname";
+    nameEl.textContent = it.item_name;
+
+    const qtyEl = document.createElement("div");
+    qtyEl.className = "sqty";
+    qtyEl.textContent = "× " + it.quantity;
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", async function () {
+      const newName = window.prompt("Item name:", it.item_name);
+      if (newName === null) return;
+      const trimmed = newName.trim();
+      if (!trimmed) { show("error", "Item name cannot be empty."); return; }
+
+      const qtyStr = window.prompt("Quantity:", String(it.quantity));
+      if (qtyStr === null) return;
+      const newQty = Number(qtyStr);
+      if (!Number.isInteger(newQty) || newQty < 1 || newQty > 999) {
+        show("error", "Quantity must be a whole number between 1 and 999."); return;
+      }
+
+      clearMsg();
+      editBtn.disabled = true;
+      try {
+        const r = await api("/api/shopping-items/" + it.id, {
+          method: "PATCH",
+          body: { item_name: trimmed, quantity: newQty },
+        });
+        if (r.status === 401) { window.location.assign("/"); return; }
+        if (r.ok) { show("ok", "Saved."); await load(); }
+        else show("error", (r.data && r.data.error) || "Could not save.");
+      } catch (e) {
+        show("error", "Network error while saving.");
+      } finally {
+        editBtn.disabled = false;
+      }
+    });
+
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "danger";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", async function () {
+      if (!window.confirm('Delete "' + it.item_name + '"?')) return;
+      clearMsg();
+      delBtn.disabled = true;
+      try {
+        const r = await api("/api/shopping-items/" + it.id, { method: "DELETE" });
+        if (r.status === 401) { window.location.assign("/"); return; }
+        if (r.ok) { show("ok", "Deleted."); await load(); }
+        else show("error", (r.data && r.data.error) || "Could not delete.");
+      } catch (e) {
+        show("error", "Network error while deleting.");
+      } finally {
+        delBtn.disabled = false;
+      }
+    });
+
+    actions.append(editBtn, delBtn);
+    row.append(cb, nameEl, qtyEl, actions);
+    return row;
+  }
+
+  function render(items) {
+    const remaining = items.filter(function (i) { return !i.is_purchased; });
+    const purchased = items.filter(function (i) { return i.is_purchased; });
+
+    if (remaining.length === 0) {
+      renderEmpty(remainingList, "Nothing left to buy. Nice work!");
+    } else {
+      remainingList.replaceChildren();
+      remaining.forEach(function (i) { remainingList.appendChild(buildItem(i)); });
+    }
+
+    if (purchased.length === 0) {
+      renderEmpty(purchasedList, "No purchased items yet.");
+    } else {
+      purchasedList.replaceChildren();
+      purchased.forEach(function (i) { purchasedList.appendChild(buildItem(i)); });
+    }
+
+    document.getElementById("statTotal").textContent = String(items.length);
+    document.getElementById("statRemaining").textContent = String(remaining.length);
+    document.getElementById("statPurchased").textContent = String(purchased.length);
+  }
+
+  async function load() {
+    clearMsg();
+    try {
+      const r = await api("/api/shopping-items");
+      if (r.status === 401) { window.location.assign("/"); return; }
+      if (!r.ok) { show("error", "Could not load shopping list."); return; }
+      render(r.data.items || []);
+    } catch (e) {
+      show("error", "Network error while loading.");
+    }
+  }
+
+  const addForm = document.getElementById("addForm");
+  const addBtn = document.getElementById("addBtn");
+  addForm.addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    clearMsg();
+    const name = document.getElementById("newName").value.trim();
+    const qty = Number(document.getElementById("newQty").value);
+
+    if (!name) { show("error", "Item name is required."); return; }
+    if (!Number.isInteger(qty) || qty < 1 || qty > 999) {
+      show("error", "Quantity must be a whole number between 1 and 999."); return;
+    }
+
+    addBtn.disabled = true;
+    try {
+      const r = await api("/api/shopping-items", {
+        method: "POST",
+        body: { item_name: name, quantity: qty },
+      });
+      if (r.status === 401) { window.location.assign("/"); return; }
+      if (r.ok) {
+        addForm.reset();
+        document.getElementById("newQty").value = "1";
+        show("ok", "Added.");
+        await load();
+      } else {
+        show("error", (r.data && r.data.error) || "Could not add item.");
+      }
+    } catch (e) {
+      show("error", "Network error while adding.");
+    } finally {
+      addBtn.disabled = false;
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async function () {
+    try { await api("/api/logout", { method: "POST" }); } catch (e) {}
+    window.location.assign("/");
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

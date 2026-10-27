@@ -1,0 +1,38 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables (NEVER commit)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Local database / temp
+*.sqlite3
+*.db
+tmp/
+.cache/
