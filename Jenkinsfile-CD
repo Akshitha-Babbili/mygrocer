@@ -1,12 +1,60 @@
-
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+    environment {
+        IMAGE_NAME = 'mygrocer-app'
+        K8S_DEPLOYMENT = 'mygrocer-deployment'
+        K8S_CONTAINER = 'mygrocer'
+    }
+
     stages {
-        stage('Checkout') {
+        stage('Start') {
             steps {
-                echo 'Checking out MyGrocer source code'
+                echo 'Starting MyGrocer CI/CD deployment pipeline.'
+            }
+        }
+
+        stage('Checkout Source Code') {
+            steps {
                 checkout scm
+                bat 'git rev-parse --short HEAD'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t %IMAGE_NAME%:%BUILD_NUMBER% .'
+            }
+        }
+
+        stage('Docker Login and Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        @echo off
+                        echo %DOCKER_TOKEN%| docker login -u "%DOCKER_USER%" --password-stdin
+                        if errorlevel 1 exit /b 1
+
+                        docker tag %IMAGE_NAME%:%BUILD_NUMBER% %DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+
+                        docker push %DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+
+                        docker logout
+                    '''
+                }
             }
         }
 
@@ -14,20 +62,38 @@ pipeline {
             steps {
                 bat 'kubectl config current-context'
                 bat 'kubectl get nodes'
+                bat 'kubectl get secret mygrocer-db-secret'
             }
         }
 
-        stage('Deploy MyGrocer') {
+        stage('Deploy to Kubernetes') {
             steps {
-                bat 'kubectl apply -f k8s-deployment.yaml'
-                bat 'kubectl apply -f k8s-service.yaml'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        kubectl apply -f k8s-deployment.yaml
+                        if errorlevel 1 exit /b 1
+
+                        kubectl apply -f k8s-service.yaml
+                        if errorlevel 1 exit /b 1
+
+                        kubectl set image deployment/%K8S_DEPLOYMENT% %K8S_CONTAINER%=%DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+                    '''
+                }
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                bat 'kubectl rollout status deployment/mygrocer-deployment --timeout=120s'
-                bat 'kubectl get pods'
+                bat 'kubectl rollout status deployment/mygrocer-deployment --timeout=180s'
+                bat 'kubectl get deployments'
+                bat 'kubectl get pods -o wide'
                 bat 'kubectl get service mygrocer-service'
             }
         }
@@ -35,10 +101,13 @@ pipeline {
 
     post {
         success {
-            echo 'MyGrocer Kubernetes deployment completed successfully.'
+            echo 'SUCCESS: MyGrocer image pushed and Kubernetes deployment verified.'
         }
         failure {
-            echo 'Deployment failed. Check Console Output.'
+            echo 'FAILURE: Check Console Output for the failed stage.'
+        }
+        always {
+            echo 'MyGrocer CI/CD pipeline finished.'
         }
     }
 }
