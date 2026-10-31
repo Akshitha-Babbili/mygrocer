@@ -3,171 +3,381 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MyGrocer — Kitchen Inventory</title>
+<title>MyGrocer — Kitchen</title>
 <style>
   :root{
-    --ivory:#FAF9F2; --forest:#234B3A; --sage:#A8BE91;
-    --butter:#F0D987; --ink:#292E29; --white:#ffffff;
-    --danger:#B23A2E; --muted:#6B756B;
-    --shadow:0 8px 24px rgba(35,75,58,.10);
-    --radius:16px;
+    --ivory:#FAF9F2; --forest:#234B3A; --forest-dark:#1B3B2D;
+    --sage:#A8BE91; --sage-soft:#E7EEDD; --butter:#F0D987;
+    --ink:#292E29; --white:#ffffff; --muted:#6B756B;
+    --danger:#B23A2E; --danger-soft:#FDECEB;
+    --line:#E4E9E0; --shadow:0 8px 24px rgba(35,75,58,.08);
+    --shadow-sm:0 2px 8px rgba(35,75,58,.06);
+    --radius:16px; --radius-sm:12px;
+    --sidebar-w:250px; --topbar-h:64px;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:var(--ivory); color:var(--ink); min-height:100vh;
+    background:var(--ivory); color:var(--ink); -webkit-font-smoothing:antialiased;
   }
-  header.top{
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .shell{display:flex; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:var(--sidebar-w); flex:0 0 var(--sidebar-w);
     background:var(--forest); color:var(--ivory);
-    padding:16px 24px; display:flex; align-items:center; gap:16px;
-    box-shadow:var(--shadow); position:sticky; top:0; z-index:5;
+    display:flex; flex-direction:column;
+    position:fixed; inset:0 auto 0 0; z-index:40;
+    padding:20px 16px;
   }
-  header.top .logo{font-size:1.25rem; font-weight:800; letter-spacing:.4px}
-  header.top .logo span{color:var(--butter)}
-  nav.links{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap}
-  nav.links a{
-    color:var(--ivory); text-decoration:none; padding:8px 12px; border-radius:10px;
-    font-size:.9rem; opacity:.9; transition:background .15s;
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-size:1.15rem; font-weight:800; letter-spacing:.3px;
+    padding:6px 8px 20px;
   }
-  nav.links a:hover{background:rgba(255,255,255,.12)}
-  nav.links a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
-  nav.links button{
-    background:transparent; color:var(--ivory); border:1px solid rgba(255,255,255,.4);
-    padding:8px 12px; border-radius:10px; cursor:pointer; font-size:.9rem;
+  .brand .leaf{font-size:1.4rem}
+  .brand span{color:var(--butter)}
+  .side-nav{display:flex; flex-direction:column; gap:4px; margin-top:8px}
+  .side-nav a{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 12px; border-radius:10px;
+    text-decoration:none; color:var(--ivory);
+    font-size:.93rem; opacity:.85; transition:background .15s, opacity .15s;
   }
-  nav.links button:hover{background:rgba(255,255,255,.12)}
-
-  main.wrap{max-width:1100px; margin:0 auto; padding:32px 24px 60px}
-  h1{margin:0 0 6px; color:var(--forest); font-size:1.7rem}
-  .sub{margin:0 0 24px; color:var(--muted)}
-
-  form.add{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:18px; display:grid; gap:12px; grid-template-columns:2fr 1fr 1.4fr auto;
-    align-items:end; margin-bottom:24px;
-  }
-  form.add label{display:block; font-weight:600; font-size:.85rem; margin-bottom:6px}
-  form.add input{
-    width:100%; padding:11px 12px; font-size:1rem;
-    border:1.5px solid #dfe4dc; border-radius:12px; outline:none;
-    background:#fff; color:var(--ink); transition:border .15s, box-shadow .15s;
-  }
-  form.add input:focus{border-color:var(--sage); box-shadow:0 0 0 3px rgba(168,190,145,.35)}
-  button.primary{
-    background:var(--forest); color:var(--ivory); border:0; border-radius:12px;
-    padding:12px 18px; font-weight:700; cursor:pointer; font-size:.95rem;
+  .side-nav a:hover{background:rgba(255,255,255,.08); opacity:1}
+  .side-nav a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
+  .side-nav a .ic{width:20px; text-align:center; font-size:1rem}
+  .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12)}
+  .sidebar-foot button{
+    width:100%; display:flex; align-items:center; gap:10px;
+    background:transparent; color:var(--ivory);
+    border:1px solid rgba(255,255,255,.3);
+    padding:10px 12px; border-radius:10px; font-size:.9rem; cursor:pointer;
     transition:background .15s;
   }
-  button.primary:hover{background:#1b3b2d}
+  .sidebar-foot button:hover{background:rgba(255,255,255,.1)}
+
+  /* ---------- Main ---------- */
+  .main{
+    margin-left:var(--sidebar-w); flex:1;
+    display:flex; flex-direction:column; min-width:0;
+  }
+  .topbar{
+    height:var(--topbar-h); display:flex; align-items:center;
+    gap:16px; padding:0 24px;
+    background:var(--white); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:30;
+  }
+  .topbar .hamburger{
+    display:none; background:transparent; border:0; font-size:1.4rem;
+    color:var(--forest); cursor:pointer; padding:4px 8px; border-radius:8px;
+  }
+  .topbar h1{margin:0; font-size:1.05rem; font-weight:700; color:var(--forest)}
+  .topbar .spacer{flex:1}
+  .user-chip{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 12px 6px 6px; border-radius:999px;
+    background:var(--sage-soft); color:var(--forest);
+    font-size:.88rem; font-weight:600;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--forest); color:var(--ivory);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.85rem;
+  }
+  .content{padding:28px 24px 60px; max-width:1180px; width:100%; margin:0 auto}
+
+  /* ---------- Headings ---------- */
+  .greeting{margin:0 0 4px; font-size:1.6rem; color:var(--forest)}
+  .tagline{margin:0 0 22px; color:var(--muted); font-size:.95rem}
+
+  /* ---------- Expiring banner ---------- */
+  .banner{
+    display:none; align-items:center; gap:12px;
+    background:#FFFBE6; border:1px solid var(--butter);
+    color:var(--forest); padding:12px 16px; border-radius:var(--radius-sm);
+    font-size:.9rem; margin-bottom:20px;
+  }
+  .banner.show{display:flex}
+  .banner .ic{font-size:1.1rem}
+  .banner strong{font-weight:700}
+
+  /* ---------- Add form ---------- */
+  .add-card{
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+    padding:20px; margin-bottom:24px;
+  }
+  .add-card h2{
+    margin:0 0 14px; font-size:.95rem; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--forest);
+  }
+  form.add{
+    display:grid; gap:14px;
+    grid-template-columns:2fr 1fr 1.4fr auto;
+    align-items:end;
+  }
+  .field label{
+    display:block; font-weight:600; font-size:.82rem; margin-bottom:6px;
+    color:var(--ink); letter-spacing:.02em;
+  }
+  .field input{
+    width:100%; padding:11px 12px; font-size:.95rem;
+    border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink); outline:none; transition:border .15s, box-shadow .15s;
+  }
+  .field input:focus{border-color:var(--sage); box-shadow:0 0 0 3px rgba(168,190,145,.3)}
+  button.primary{
+    background:var(--forest); color:var(--ivory); border:0; border-radius:10px;
+    padding:12px 20px; font-weight:700; cursor:pointer; font-size:.92rem;
+    transition:background .15s;
+  }
+  button.primary:hover{background:var(--forest-dark)}
   button.primary[disabled]{opacity:.6; cursor:wait}
 
-  .msg{min-height:20px; margin:0 0 18px; font-size:.9rem; border-radius:10px; padding:10px 12px; display:none}
+  /* ---------- Message ---------- */
+  .msg{
+    min-height:20px; margin:0 0 18px; font-size:.9rem;
+    border-radius:10px; padding:10px 14px; display:none;
+  }
   .msg.show{display:block}
-  .msg.error{background:#fdeceb; color:var(--danger); border:1px solid #f2c6c1}
-  .msg.ok{background:#eaf3e4; color:var(--forest); border:1px solid #cfe0c0}
+  .msg.error{background:var(--danger-soft); color:var(--danger); border:1px solid #F2C6C1}
+  .msg.ok{background:var(--sage-soft); color:var(--forest); border:1px solid #CFE0C0}
 
-  .list{display:grid; gap:14px}
+  /* ---------- Item list ---------- */
+  .list{display:grid; gap:12px}
   .item{
     background:var(--white); border-radius:var(--radius);
-    box-shadow:var(--shadow); padding:16px;
-    border-left:6px solid var(--sage);
-    display:grid; grid-template-columns:1.6fr .7fr 1fr 1fr auto;
-    gap:12px; align-items:center;
+    box-shadow:var(--shadow-sm); padding:16px;
+    border-left:5px solid var(--sage);
+    display:grid; gap:12px;
+    grid-template-columns:1.6fr .7fr 1fr 1fr auto;
+    align-items:center;
   }
-  .item.expired{border-left-color:var(--danger); background:#fdf6f5}
-  .item.soon{border-left-color:var(--butter); background:#fffbea}
-  .item.used{opacity:.6}
+  .item.soon{border-left-color:var(--butter); background:#FFFCF0}
+  .item.expired{border-left-color:var(--danger); background:#FDF6F5}
+  .item.used{opacity:.65}
+  .item .meta{font-size:.75rem; color:var(--muted); margin-top:4px}
   .item input, .item select{
-    width:100%; padding:8px 10px; font-size:.95rem;
-    border:1.5px solid #dfe4dc; border-radius:10px; outline:none;
-    background:#fff; color:var(--ink);
+    width:100%; padding:8px 10px; font-size:.9rem;
+    border:1.5px solid var(--line); border-radius:9px;
+    background:#fff; color:var(--ink); outline:none;
   }
   .item input:focus, .item select:focus{border-color:var(--sage)}
-  .item .meta{font-size:.75rem; color:var(--muted); margin-top:4px}
   .item .actions{display:flex; gap:6px}
   .item .actions button{
-    border:1.5px solid #dfe4dc; background:#fff; border-radius:10px;
-    padding:8px 10px; cursor:pointer; font-size:.9rem; color:var(--ink);
+    border:1.5px solid var(--line); background:#fff; border-radius:9px;
+    padding:8px 10px; cursor:pointer; font-size:.85rem; color:var(--ink);
     transition:background .15s;
   }
-  .item .actions button:hover{background:#f3f5ef}
-  .item .actions button.danger{color:var(--danger); border-color:#f2c6c1}
-  .item .actions button.danger:hover{background:#fdeceb}
+  .item .actions button:hover{background:#F3F5EF}
   .item .actions button.save{color:var(--forest); border-color:var(--sage); font-weight:700}
+  .item .actions button.danger{color:var(--danger); border-color:#F2C6C1}
+  .item .actions button.danger:hover{background:var(--danger-soft)}
 
+  /* ---------- Empty ---------- */
   .empty{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:36px; text-align:center; color:var(--muted);
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+    padding:40px 24px; text-align:center; color:var(--muted);
   }
-  .empty .icon{font-size:2rem; margin-bottom:8px}
+  .empty .icon{font-size:2.2rem; margin-bottom:8px}
+  .empty h3{margin:0 0 6px; color:var(--forest); font-size:1.05rem}
 
-  @media (max-width:820px){
+  /* ---------- AI recipe section ---------- */
+  .ai-card{
+    margin-top:36px;
+    background:linear-gradient(135deg, #F7FAF2 0%, #EEF3E5 100%);
+    border:1px solid var(--sage);
+    border-radius:var(--radius); padding:22px;
+  }
+  .ai-card h2{
+    margin:0 0 6px; font-size:1.1rem; color:var(--forest);
+    display:flex; align-items:center; gap:8px;
+  }
+  .ai-card p.hint{
+    margin:0 0 16px; font-size:.88rem; color:var(--muted); line-height:1.55;
+  }
+  .ai-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  button.ai{
+    background:linear-gradient(135deg, var(--forest) 0%, #2E6A52 100%);
+    color:var(--ivory); border:0; border-radius:10px;
+    padding:12px 20px; font-weight:700; cursor:pointer; font-size:.92rem;
+    display:inline-flex; align-items:center; gap:8px;
+    transition:transform .1s, box-shadow .15s;
+  }
+  button.ai:hover{box-shadow:0 6px 18px rgba(35,75,58,.25)}
+  button.ai:active{transform:translateY(1px)}
+  button.ai[disabled]{opacity:.6; cursor:wait}
+  .ai-note{font-size:.82rem; color:var(--muted)}
+
+  .ai-result{margin-top:20px; display:none}
+  .ai-result.show{display:block}
+  .recipe{
+    background:var(--white); border-radius:var(--radius-sm);
+    box-shadow:var(--shadow-sm); padding:20px; border-top:4px solid var(--sage);
+  }
+  .recipe h3{
+    margin:0 0 6px; font-size:1.15rem; color:var(--forest);
+    display:flex; align-items:center; gap:8px;
+  }
+  .recipe .r-meta{
+    display:flex; gap:16px; flex-wrap:wrap;
+    font-size:.85rem; color:var(--muted); margin-bottom:16px;
+  }
+  .recipe .r-meta span{display:flex; align-items:center; gap:5px}
+  .recipe h4{
+    margin:16px 0 8px; font-size:.82rem; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--forest);
+  }
+  .recipe ul, .recipe ol{
+    margin:0; padding-left:20px; font-size:.92rem; line-height:1.65;
+    color:var(--ink);
+  }
+  .recipe li{margin-bottom:4px}
+  .recipe .r-error{
+    background:var(--danger-soft); color:var(--danger);
+    padding:14px 16px; border-radius:var(--radius-sm); font-size:.9rem;
+    border:1px solid #F2C6C1;
+  }
+  .ai-loading{
+    display:flex; align-items:center; gap:10px;
+    font-size:.9rem; color:var(--muted);
+  }
+  .spinner{
+    width:18px; height:18px; border-radius:50%;
+    border:3px solid var(--sage-soft); border-top-color:var(--forest);
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- Mobile ---------- */
+  .backdrop{display:none; position:fixed; inset:0; background:rgba(35,75,58,.35); z-index:35}
+  @media (max-width:900px){
+    .sidebar{transform:translateX(-100%); transition:transform .25s ease; box-shadow:var(--shadow)}
+    .sidebar.open{transform:translateX(0)}
+    .main{margin-left:0}
+    .topbar .hamburger{display:inline-flex; align-items:center; justify-content:center}
+    .backdrop.show{display:block}
     form.add{grid-template-columns:1fr 1fr}
     form.add button.primary{grid-column:1 / -1}
     .item{grid-template-columns:1fr 1fr}
     .item .actions{grid-column:1 / -1; justify-content:flex-end}
   }
+  @media (max-width:480px){
+    .content{padding:20px 14px 60px}
+    .greeting{font-size:1.35rem}
+    .topbar{padding:0 14px}
+    .user-chip .name{display:none}
+    form.add{grid-template-columns:1fr}
+    .item{grid-template-columns:1fr}
+    .item .actions{justify-content:stretch}
+    .item .actions button{flex:1}
+  }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="logo">🌿 MyGrocer<span>.</span></div>
-  <nav class="links">
-    <a href="/dashboard.html">Dashboard</a>
-    <a href="/kitchen.html" class="active">Kitchen</a>
-    <a href="/shopping.html">Shopping</a>
-    <button id="logoutBtn" type="button">Sign out</button>
-  </nav>
-</header>
 
-<main class="wrap">
-  <h1>Kitchen Inventory</h1>
-  <p class="sub">Track what you own. Edit any field, then press Save.</p>
+<div class="shell">
 
-  <form class="add" id="addForm" novalidate>
-    <div>
-      <label for="newName">Item name</label>
-      <input id="newName" type="text" maxlength="150" placeholder="e.g. Tomatoes" required />
+  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+    <div class="brand"><span class="leaf">🌿</span> MyGrocer<span>.</span></div>
+    <nav class="side-nav">
+      <a href="/dashboard.html"><span class="ic">📊</span> Dashboard</a>
+      <a href="/kitchen.html" class="active" aria-current="page"><span class="ic">🍅</span> Kitchen</a>
+      <a href="/shopping.html"><span class="ic">🛒</span> Shopping</a>
+    </nav>
+    <div class="sidebar-foot">
+      <button id="logoutBtn" type="button"><span class="ic">↩︎</span> Sign out</button>
     </div>
-    <div>
-      <label for="newQty">Quantity</label>
-      <input id="newQty" type="number" min="1" max="999" value="1" required />
-    </div>
-    <div>
-      <label for="newExp">Expiry (optional)</label>
-      <input id="newExp" type="date" />
-    </div>
-    <button class="primary" type="submit" id="addBtn">Add item</button>
-  </form>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
 
-  <div id="msg" class="msg" role="status" aria-live="polite"></div>
-  <div id="list" class="list" aria-live="polite"></div>
-</main>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="menuBtn" type="button" aria-label="Open menu">☰</button>
+      <h1>Kitchen Inventory</h1>
+      <div class="spacer"></div>
+      <div class="user-chip" title="Signed in">
+        <div class="avatar" id="avatar">?</div>
+        <span class="name" id="userName">—</span>
+      </div>
+    </header>
+
+    <main class="content">
+      <h2 class="greeting">Kitchen</h2>
+      <p class="tagline">Track what you own, catch expiries before they spoil, and generate AI recipes from your ingredients.</p>
+
+      <div class="banner" id="expiringBanner" role="status" aria-live="polite">
+        <span class="ic">⚠️</span>
+        <span id="expiringText"></span>
+      </div>
+
+      <!-- Add form -->
+      <div class="add-card">
+        <h2>Add an item</h2>
+        <form class="add" id="addForm" novalidate>
+          <div class="field">
+            <label for="newName">Item name</label>
+            <input id="newName" type="text" maxlength="150" placeholder="e.g. Tomatoes" required />
+          </div>
+          <div class="field">
+            <label for="newQty">Quantity</label>
+            <input id="newQty" type="number" min="1" max="999" value="1" required />
+          </div>
+          <div class="field">
+            <label for="newExp">Expiry (optional)</label>
+            <input id="newExp" type="date" />
+          </div>
+          <button class="primary" type="submit" id="addBtn">Add item</button>
+        </form>
+      </div>
+
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+      <div id="list" class="list" aria-live="polite"></div>
+
+      <!-- AI recipe generator -->
+      <section class="ai-card" aria-labelledby="aiTitle">
+        <h2 id="aiTitle"><span aria-hidden="true">✨</span> AI recipes from your kitchen</h2>
+        <p class="hint">
+          Generates a recipe using the active ingredients in your kitchen,
+          prioritising items that are expiring soon. Powered by Gemini — the
+          request goes through your Flask backend so your API key stays private.
+        </p>
+        <div class="ai-actions">
+          <button class="ai" id="generateRecipeBtn" type="button">🍳 Generate recipe</button>
+          <span class="ai-note" id="aiHint">Uses your active ingredients</span>
+        </div>
+        <div class="ai-result" id="aiResult" aria-live="polite"></div>
+      </section>
+
+    </main>
+  </div>
+</div>
 
 <script>
 (function () {
   "use strict";
 
+  /* ---------- CSRF-aware fetch ---------- */
   function getCookie(name) {
     const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return m ? decodeURIComponent(m[1]) : "";
   }
-
   async function api(path, opts) {
     opts = opts || {};
-    const headers = Object.assign(
-      { "Accept": "application/json" },
-      opts.headers || {}
-    );
+    const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
     const method = (opts.method || "GET").toUpperCase();
     if (opts.body) headers["Content-Type"] = "application/json";
     if (method !== "GET" && method !== "HEAD") {
       headers["X-CSRFToken"] = getCookie("XSRF-TOKEN");
     }
     const res = await fetch(path, {
-      method,
-      headers,
-      credentials: "same-origin",
+      method, headers, credentials: "same-origin",
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     let data = null;
@@ -183,26 +393,61 @@
   function clearMsg() { msg.className = "msg"; msg.textContent = ""; }
 
   const listEl = document.getElementById("list");
+  const expiringBanner = document.getElementById("expiringBanner");
+  const expiringText = document.getElementById("expiringText");
 
+  /* ---------- Date helper ---------- */
   function daysUntil(iso) {
     if (!iso) return null;
     const exp = new Date(iso + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     return Math.round((exp - today) / 86400000);
   }
 
+  /* ---------- Sidebar (mobile) ---------- */
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  document.getElementById("menuBtn").addEventListener("click", function () {
+    sidebar.classList.add("open"); backdrop.classList.add("show");
+  });
+  backdrop.addEventListener("click", function () {
+    sidebar.classList.remove("open"); backdrop.classList.remove("show");
+  });
+
+  /* ---------- Render items ---------- */
+  let activeCount = 0;
+
   function renderItems(items) {
     listEl.replaceChildren();
+
+    const soon = items.filter(function (it) {
+      if (it.status !== "active") return false;
+      const d = daysUntil(it.expiry_date);
+      return d !== null && d >= 0 && d <= 3;
+    });
+    const expired = items.filter(function (it) {
+      return it.status === "expired" ||
+        (it.status === "active" && daysUntil(it.expiry_date) !== null && daysUntil(it.expiry_date) < 0);
+    });
+    if (soon.length || expired.length) {
+      const bits = [];
+      if (soon.length) bits.push(soon.length + " expiring within 3 days");
+      if (expired.length) bits.push(expired.length + " already expired");
+      expiringText.textContent = bits.join(" · ");
+      expiringBanner.classList.add("show");
+    } else {
+      expiringBanner.classList.remove("show");
+    }
+
     if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "empty";
-      const ic = document.createElement("div");
-      ic.className = "icon"; ic.textContent = "🧺";
-      const t = document.createElement("div");
-      t.textContent = "Nothing in your kitchen yet. Add your first item above.";
-      empty.append(ic, t);
+      empty.innerHTML =
+        '<div class="icon">🧺</div>' +
+        '<h3>Nothing in your kitchen yet</h3>' +
+        '<p>Add your first item above — we\'ll track it and flag it before it expires.</p>';
       listEl.appendChild(empty);
+      updateAiHint([]);
       return;
     }
 
@@ -214,6 +459,7 @@
       else if (d !== null && d <= 3) row.classList.add("soon");
       if (it.status === "used") row.classList.add("used");
 
+      /* name + meta */
       const nameCell = document.createElement("div");
       const nameInput = document.createElement("input");
       nameInput.type = "text";
@@ -228,6 +474,7 @@
       else meta.textContent = "Expires in " + d + " day(s)";
       nameCell.append(nameInput, meta);
 
+      /* qty */
       const qtyCell = document.createElement("div");
       const qtyInput = document.createElement("input");
       qtyInput.type = "number"; qtyInput.min = "1"; qtyInput.max = "999";
@@ -235,6 +482,7 @@
       qtyInput.setAttribute("aria-label", "Quantity");
       qtyCell.appendChild(qtyInput);
 
+      /* expiry */
       const expCell = document.createElement("div");
       const expInput = document.createElement("input");
       expInput.type = "date";
@@ -242,6 +490,7 @@
       expInput.setAttribute("aria-label", "Expiry date");
       expCell.appendChild(expInput);
 
+      /* status */
       const statCell = document.createElement("div");
       const statSel = document.createElement("select");
       statSel.setAttribute("aria-label", "Status");
@@ -253,12 +502,12 @@
       });
       statCell.appendChild(statSel);
 
+      /* actions */
       const actions = document.createElement("div");
       actions.className = "actions";
 
       const saveBtn = document.createElement("button");
-      saveBtn.type = "button"; saveBtn.className = "save";
-      saveBtn.textContent = "Save";
+      saveBtn.type = "button"; saveBtn.className = "save"; saveBtn.textContent = "Save";
       saveBtn.addEventListener("click", async function () {
         clearMsg();
         saveBtn.disabled = true;
@@ -272,14 +521,9 @@
               status: statSel.value,
             },
           });
-          if (r.ok) {
-            show("ok", "Saved.");
-            await load();
-          } else if (r.status === 401) {
-            window.location.assign("/");
-          } else {
-            show("error", (r.data && r.data.error) || "Could not save.");
-          }
+          if (r.ok) { show("ok", "Saved."); await load(); }
+          else if (r.status === 401) { window.location.assign("/"); }
+          else show("error", (r.data && r.data.error) || "Could not save.");
         } catch (e) {
           show("error", "Network error while saving.");
         } finally {
@@ -288,8 +532,7 @@
       });
 
       const delBtn = document.createElement("button");
-      delBtn.type = "button"; delBtn.className = "danger";
-      delBtn.textContent = "Delete";
+      delBtn.type = "button"; delBtn.className = "danger"; delBtn.textContent = "Delete";
       delBtn.addEventListener("click", async function () {
         if (!window.confirm('Delete "' + it.item_name + '"?')) return;
         clearMsg();
@@ -310,8 +553,25 @@
       row.append(nameCell, qtyCell, expCell, statCell, actions);
       listEl.appendChild(row);
     });
+
+    updateAiHint(items);
   }
 
+  function updateAiHint(items) {
+    const aiHint = document.getElementById("aiHint");
+    const btn = document.getElementById("generateRecipeBtn");
+    const active = items.filter(function (it) { return it.status === "active"; });
+    activeCount = active.length;
+    if (activeCount === 0) {
+      aiHint.textContent = "Add active ingredients first";
+      btn.disabled = true;
+    } else {
+      aiHint.textContent = activeCount + " active ingredient(s) available";
+      btn.disabled = false;
+    }
+  }
+
+  /* ---------- Load ---------- */
   async function load() {
     clearMsg();
     try {
@@ -324,6 +584,16 @@
     }
   }
 
+  async function loadMe() {
+    const r = await api("/api/me");
+    if (!r.ok) {
+      if (r.status === 401) { window.location.assign("/"); return null; }
+      return null;
+    }
+    return r.data.user;
+  }
+
+  /* ---------- Add form ---------- */
   const addForm = document.getElementById("addForm");
   const addBtn = document.getElementById("addBtn");
   addForm.addEventListener("submit", async function (ev) {
@@ -360,12 +630,119 @@
     }
   });
 
+  /* ---------- AI recipe generation ---------- */
+  const aiResult = document.getElementById("aiResult");
+  const genBtn = document.getElementById("generateRecipeBtn");
+
+  function renderAiLoading() {
+    aiResult.classList.add("show");
+    aiResult.innerHTML =
+      '<div class="ai-loading"><div class="spinner"></div> Asking Gemini for a recipe…</div>';
+  }
+  function renderAiError(text) {
+    aiResult.classList.add("show");
+    const div = document.createElement("div");
+    div.className = "r-error";
+    div.textContent = text;
+    aiResult.replaceChildren(div);
+  }
+  function renderAiRecipe(recipe) {
+    aiResult.classList.add("show");
+    const wrap = document.createElement("div");
+    wrap.className = "recipe";
+
+    const title = document.createElement("h3");
+    title.innerHTML = '<span aria-hidden="true">🍳</span>';
+    title.append(document.createTextNode(recipe.title || "Recipe"));
+    wrap.appendChild(title);
+
+    const metaBits = [];
+    if (recipe.cooking_time) metaBits.push("⏱ " + recipe.cooking_time);
+    if (recipe.servings) metaBits.push("🍽 Serves " + recipe.servings);
+    if (recipe.difficulty) metaBits.push("📈 " + recipe.difficulty);
+    if (metaBits.length) {
+      const meta = document.createElement("div");
+      meta.className = "r-meta";
+      metaBits.forEach(function (b) {
+        const s = document.createElement("span"); s.textContent = b; meta.appendChild(s);
+      });
+      wrap.appendChild(meta);
+    }
+
+    if (Array.isArray(recipe.ingredients) && recipe.ingredients.length) {
+      const h = document.createElement("h4"); h.textContent = "Ingredients";
+      const ul = document.createElement("ul");
+      recipe.ingredients.forEach(function (i) {
+        const li = document.createElement("li");
+        li.textContent = (typeof i === "string") ? i : (i.name + (i.quantity ? " — " + i.quantity : ""));
+        ul.appendChild(li);
+      });
+      wrap.append(h, ul);
+    }
+
+    if (Array.isArray(recipe.steps) && recipe.steps.length) {
+      const h = document.createElement("h4"); h.textContent = "Preparation";
+      const ol = document.createElement("ol");
+      recipe.steps.forEach(function (s) {
+        const li = document.createElement("li");
+        li.textContent = s;
+        ol.appendChild(li);
+      });
+      wrap.append(h, ol);
+    }
+
+    aiResult.replaceChildren(wrap);
+  }
+
+  genBtn.addEventListener("click", async function () {
+    clearMsg();
+    genBtn.disabled = true;
+    renderAiLoading();
+    try {
+      const r = await api("/api/generate-recipe", { method: "POST", body: {} });
+      if (r.status === 401) { window.location.assign("/"); return; }
+
+      if (r.status === 404 || r.status === 501) {
+        renderAiError(
+          "AI recipe generation isn't enabled yet on the server. " +
+          "It will be added in the next deployment step — your ingredients are ready to go."
+        );
+        return;
+      }
+      if (!r.ok) {
+        const msgTxt = (r.data && r.data.error) || "Could not generate a recipe right now.";
+        renderAiError(msgTxt);
+        return;
+      }
+      if (r.data && r.data.recipe) {
+        renderAiRecipe(r.data.recipe);
+      } else {
+        renderAiError("The AI response didn't include a recipe. Please try again.");
+      }
+    } catch (e) {
+      renderAiError("Network error while generating a recipe.");
+    } finally {
+      genBtn.disabled = activeCount === 0;
+    }
+  });
+
+  /* ---------- Logout ---------- */
   document.getElementById("logoutBtn").addEventListener("click", async function () {
     try { await api("/api/logout", { method: "POST" }); } catch (e) {}
     window.location.assign("/");
   });
 
-  load();
+  /* ---------- Init ---------- */
+  (async function init() {
+    const user = await loadMe();
+    if (user) {
+      const first = (user.name || "").trim().split(/\s+/)[0] || "";
+      document.getElementById("userName").textContent = user.name || "";
+      document.getElementById("avatar").textContent =
+        (first ? first.charAt(0) : "?").toUpperCase();
+    }
+    await load();
+  })();
 })();
 </script>
 </body>

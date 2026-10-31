@@ -7,12 +7,19 @@ Environment variables (see .env.example):
     FLASK_SECRET_KEY      (required, long random string)
     FLASK_COOKIE_SECURE   (optional, "1" in HTTPS production)
     FLASK_ENV             (optional, "production" disables debug)
+    GEMINI_API_KEY        (required for AI recipes)
+    GEMINI_MODEL          (optional, default "gemini-3.8-flash")
 """
 
 import os
+import json
 import logging
 from datetime import date, timedelta, datetime, timezone
 from functools import wraps
+
+# Load .env BEFORE any os.environ reads
+from dotenv import load_dotenv
+load_dotenv()
 
 import psycopg
 from psycopg.rows import dict_row
@@ -22,6 +29,9 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect, CSRFError
+
+from google import genai
+from google.genai import types as genai_types
 
 # --------------------------------------------------------------------------- #
 # Configuration
@@ -40,7 +50,6 @@ IS_PROD = os.environ.get("FLASK_ENV", "development").lower() == "production"
 if not SECRET_KEY:
     if IS_PROD:
         raise RuntimeError("FLASK_SECRET_KEY must be set in production")
-    # Dev-only fallback so local testing isn't blocked; clearly insecure.
     SECRET_KEY = "dev-only-insecure-secret-change-me"
     log.warning("FLASK_SECRET_KEY not set – using insecure dev fallback")
 
@@ -49,15 +58,14 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("FLASK_COOKIE_SECURE") == "1",
-    PERMANENT_SESSION_LIFETIME=timedelta(days=30),   # remember-me
+    PERMANENT_SESSION_LIFETIME=timedelta(days=30),
     SESSION_REFRESH_EACH_REQUEST=False,
-    WTF_CSRF_TIME_LIMIT=None,                        # token bound to session
-    MAX_CONTENT_LENGTH=1 * 1024 * 1024,              # 1 MB body cap
+    WTF_CSRF_TIME_LIMIT=None,
+    MAX_CONTENT_LENGTH=1 * 1024 * 1024,
 )
 
-# CSRF: token stored in session; issued as XSRF-TOKEN cookie for JS to read.
 csrf = CSRFProtect(app)
-app.config["WTF_CSRF_CHECK_DEFAULT"] = False  # we check explicitly per-route
+app.config["WTF_CSRF_CHECK_DEFAULT"] = False
 
 
 # --------------------------------------------------------------------------- #
@@ -79,8 +87,7 @@ def get_db():
 def db_execute(sql, params=(), fetch=None):
     """
     Run a statement in a transaction.
-    fetch: None | 'one' | 'all'  -> controls cursor method used.
-    Returns the fetched rows (or rowcount for no-fetch).
+    fetch: None | 'one' | 'all'
     """
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -130,9 +137,7 @@ def fail(msg, code=400, **extra):
 
 
 # --------------------------------------------------------------------------- #
-# CSRF: manual enforcement on cookie-authenticated state changers.
-# The frontend reads the XSRF-TOKEN cookie (set by Flask-WTF) and sends it
-# back as the X-CSRFToken header. We validate here.
+# CSRF
 # --------------------------------------------------------------------------- #
 def csrf_protect():
     """Call at the start of every state-changing API route."""
@@ -151,19 +156,14 @@ def handle_csrf_error(e):
     return jsonify(error="CSRF token missing or invalid"), 403
 
 
-# --------------------------------------------------------------------------- #
-# Session cookie: make sure a CSRF cookie is present on GET page loads.
-# --------------------------------------------------------------------------- #
 @app.after_request
 def set_csrf_cookie(resp):
-    # Flask-WTF injects csrf_token() into templates; we mirror it as a
-    # readable cookie so fetch() can send it back in the header.
     if request.method == "GET" and resp.mimetype == "text/html":
         from flask_wtf.csrf import generate_csrf
         token = generate_csrf()
         resp.set_cookie(
             "XSRF-TOKEN", token,
-            httponly=False,          # JS must read it
+            httponly=False,
             samesite="Lax",
             secure=app.config["SESSION_COOKIE_SECURE"],
             max_age=60 * 60 * 8,
@@ -579,7 +579,125 @@ def api_shop_delete(sid):
 
 
 # --------------------------------------------------------------------------- #
-# Error handlers (never leak stack traces)
+# Gemini AI Recipe Generation
+# --------------------------------------------------------------------------- #
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+
+
+def _recipe_prompt(ingredients):
+    lines = []
+    for it in ingredients:
+        line = f"- {it['name']} (qty: {it['quantity']})"
+        if it.get("expiry_date"):
+            line += f", expires {it['expiry_date']}"
+        lines.append(line)
+    return (
+        "You are a helpful home-cooking assistant. "
+        "Using mainly the ingredients listed below, propose ONE simple recipe.\n\n"
+        "Ingredients available:\n"
+        + "\n".join(lines)
+        + "\n\nPrioritise ingredients that expire soonest. "
+        "You may assume basic pantry staples (salt, pepper, oil, water) are available.\n\n"
+        "Return ONLY valid JSON (no markdown fences, no commentary) matching this schema:\n"
+        "{\n"
+        '  "title": "string",\n'
+        '  "cooking_time": "string (e.g. \'25 minutes\')",\n'
+        '  "servings": integer,\n'
+        '  "difficulty": "Easy | Medium | Hard",\n'
+        '  "ingredients": ["string", ...],\n'
+        '  "steps": ["string", ...]\n'
+        "}\n"
+    )
+
+
+def _extract_json(text):
+    """Strip optional ```json fences and parse the first JSON object."""
+    if not text:
+        return None
+    t = text.strip()
+    if t.startswith("```"):
+        t = t.split("\n", 1)[1] if "\n" in t else t
+        if t.endswith("```"):
+            t = t[:-3]
+        t = t.strip()
+    if not t.startswith("{"):
+        start = t.find("{")
+        end = t.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            t = t[start:end + 1]
+    try:
+        return json.loads(t)
+    except json.JSONDecodeError:
+        return None
+
+
+@app.post("/api/generate-recipe")
+@login_required
+def generate_recipe():
+    csrf_protect()
+
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return fail("Gemini API key is not configured on the server.", 503)
+
+    rows = db_execute(
+        """
+        SELECT item_name, quantity, expiry_date
+        FROM groceries
+        WHERE user_id = %s AND status = 'active'
+        ORDER BY expiry_date ASC NULLS LAST
+        LIMIT 30
+        """,
+        (current_user_id(),),
+        fetch="all",
+    )
+    if not rows:
+        return fail("Add some active kitchen ingredients first.", 400)
+
+    ingredients = [
+        {
+            "name": r["item_name"],
+            "quantity": r["quantity"],
+            "expiry_date": r["expiry_date"].isoformat() if r["expiry_date"] else None,
+        }
+        for r in rows
+    ]
+
+    prompt = _recipe_prompt(ingredients)
+
+    try:
+        client = genai.Client(api_key=api_key)
+        resp = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                temperature=0.7,
+                response_mime_type="application/json",
+            ),
+        )
+        raw = getattr(resp, "text", None)
+    except Exception:
+        log.exception("Gemini call failed")
+        return fail("The AI service is unavailable right now. Please try again.", 502)
+
+    recipe = _extract_json(raw)
+    if not isinstance(recipe, dict):
+        log.warning("Gemini returned non-JSON: %r", raw[:500] if raw else None)
+        return fail("The AI returned an unexpected response. Please try again.", 502)
+
+    normalised = {
+        "title": recipe.get("title") or "Suggested recipe",
+        "cooking_time": recipe.get("cooking_time") or "",
+        "servings": recipe.get("servings") or 2,
+        "difficulty": recipe.get("difficulty") or "",
+        "ingredients": recipe.get("ingredients") or [],
+        "steps": recipe.get("steps") or [],
+    }
+    return jsonify(recipe=normalised)
+
+
+# --------------------------------------------------------------------------- #
+# Error handlers
 # --------------------------------------------------------------------------- #
 @app.errorhandler(404)
 def h404(e):

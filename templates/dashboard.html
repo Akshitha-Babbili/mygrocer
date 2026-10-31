@@ -6,226 +6,366 @@
 <title>MyGrocer — Dashboard</title>
 <style>
   :root{
-    --ivory:#FAF9F2; --forest:#234B3A; --sage:#A8BE91;
-    --butter:#F0D987; --ink:#292E29; --white:#ffffff;
-    --danger:#B23A2E; --muted:#6B756B;
-    --shadow:0 8px 24px rgba(35,75,58,.10);
-    --radius:16px;
+    --ivory:#FAF9F2; --forest:#234B3A; --forest-dark:#1B3B2D;
+    --sage:#A8BE91; --sage-soft:#E7EEDD; --butter:#F0D987;
+    --ink:#292E29; --white:#ffffff; --muted:#6B756B;
+    --danger:#B23A2E; --danger-soft:#FDECEB;
+    --line:#E4E9E0; --shadow:0 8px 24px rgba(35,75,58,.08);
+    --shadow-sm:0 2px 8px rgba(35,75,58,.06);
+    --radius:16px; --radius-sm:12px;
+    --sidebar-w:250px; --topbar-h:64px;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:var(--ivory); color:var(--ink); min-height:100vh;
+    background:var(--ivory); color:var(--ink); -webkit-font-smoothing:antialiased;
   }
-  header.top{
+  a{color:inherit}
+
+  /* ---------- Layout ---------- */
+  .shell{display:flex; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:var(--sidebar-w); flex:0 0 var(--sidebar-w);
     background:var(--forest); color:var(--ivory);
-    padding:16px 24px; display:flex; align-items:center; gap:16px;
-    box-shadow:var(--shadow); position:sticky; top:0; z-index:5;
+    display:flex; flex-direction:column;
+    position:fixed; inset:0 auto 0 0; z-index:40;
+    padding:20px 16px;
   }
-  header.top .logo{font-size:1.25rem; font-weight:800; letter-spacing:.4px}
-  header.top .logo span{color:var(--butter)}
-  nav.links{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap}
-  nav.links a{
-    color:var(--ivory); text-decoration:none; padding:8px 12px; border-radius:10px;
-    font-size:.9rem; opacity:.9; transition:background .15s;
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-size:1.15rem; font-weight:800; letter-spacing:.3px;
+    padding:6px 8px 20px;
   }
-  nav.links a:hover{background:rgba(255,255,255,.12)}
-  nav.links a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
-  nav.links button{
-    background:transparent; color:var(--ivory); border:1px solid rgba(255,255,255,.4);
-    padding:8px 12px; border-radius:10px; cursor:pointer; font-size:.9rem;
-  }
-  nav.links button:hover{background:rgba(255,255,255,.12)}
+  .brand .leaf{font-size:1.4rem}
+  .brand span{color:var(--butter)}
 
-  main.wrap{max-width:1100px; margin:0 auto; padding:32px 24px 60px}
-  .greeting{margin:0 0 4px; color:var(--forest); font-size:1.8rem}
-  .tagline{margin:0 0 28px; color:var(--muted)}
-
-  /* ── Count cards ────────────────────────────────────────── */
-  .grid{
-    display:grid; gap:18px;
-    grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  .side-nav{display:flex; flex-direction:column; gap:4px; margin-top:8px}
+  .side-nav a{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 12px; border-radius:10px;
+    text-decoration:none; color:var(--ivory);
+    font-size:.93rem; opacity:.85; transition:background .15s, opacity .15s;
   }
-  .card{
-    background:var(--white); border-radius:var(--radius); padding:22px;
-    box-shadow:var(--shadow); border-left:6px solid var(--sage);
-  }
-  .card h3{
-    margin:0 0 6px; font-size:.95rem; color:var(--muted);
-    font-weight:600; letter-spacing:.02em; text-transform:uppercase;
-  }
-  .card .num{font-size:2.2rem; font-weight:800; color:var(--forest); line-height:1}
-  .card.warn{border-left-color:var(--butter)}
-  .card.danger{border-left-color:var(--danger)}
-
-  /* ── Section headers ────────────────────────────────────── */
-  h2.section{
-    margin:36px 0 12px; color:var(--forest); font-size:1.05rem;
-    text-transform:uppercase; letter-spacing:.06em;
-    display:flex; align-items:center; gap:8px;
-  }
-  h2.section .badge{
+  .side-nav a:hover{background:rgba(255,255,255,.08); opacity:1}
+  .side-nav a.active{
     background:var(--sage); color:var(--forest);
-    font-size:.75rem; padding:2px 9px; border-radius:999px;
-    font-weight:700; letter-spacing:0;
+    font-weight:700; opacity:1;
+  }
+  .side-nav a .ic{width:20px; text-align:center; font-size:1rem}
+
+  .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12)}
+  .sidebar-foot button{
+    width:100%; display:flex; align-items:center; gap:10px;
+    background:transparent; color:var(--ivory);
+    border:1px solid rgba(255,255,255,.3);
+    padding:10px 12px; border-radius:10px;
+    font-size:.9rem; cursor:pointer; transition:background .15s;
+  }
+  .sidebar-foot button:hover{background:rgba(255,255,255,.1)}
+
+  /* ---------- Main area ---------- */
+  .main{
+    margin-left:var(--sidebar-w); flex:1;
+    display:flex; flex-direction:column; min-width:0;
+  }
+  .topbar{
+    height:var(--topbar-h); display:flex; align-items:center;
+    gap:16px; padding:0 24px;
+    background:var(--white); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:30;
+  }
+  .topbar .hamburger{
+    display:none; background:transparent; border:0; font-size:1.4rem;
+    color:var(--forest); cursor:pointer; padding:4px 8px; border-radius:8px;
+  }
+  .topbar h1{
+    margin:0; font-size:1.05rem; font-weight:700; color:var(--forest);
+    letter-spacing:.2px;
+  }
+  .topbar .spacer{flex:1}
+  .user-chip{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 12px 6px 6px; border-radius:999px;
+    background:var(--sage-soft); color:var(--forest);
+    font-size:.88rem; font-weight:600;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--forest); color:var(--ivory);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.85rem; text-transform:uppercase;
   }
 
-  /* ── Grocery chips (compact) ────────────────────────────── */
-  .chips{display:flex; flex-wrap:wrap; gap:8px}
-  .chip{
-    display:inline-flex; align-items:center; gap:6px;
-    background:var(--white); color:var(--ink);
-    border:1.5px solid var(--sage); border-radius:999px;
-    padding:5px 11px; font-size:.85rem; line-height:1.2;
-    box-shadow:0 2px 6px rgba(35,75,58,.05);
-  }
-  .chip .qty{color:var(--muted); font-size:.75rem}
-  .chip .dot{
-    width:8px; height:8px; border-radius:50%;
-    background:var(--sage); flex:0 0 auto;
-  }
-  .chip.soon{border-color:var(--butter); background:#fffbea}
-  .chip.soon .dot{background:var(--butter)}
-  .chip.expired{border-color:#f2c6c1; background:#fdf6f5; color:var(--danger)}
-  .chip.expired .dot{background:var(--danger)}
-  .chip.used{opacity:.55; border-style:dashed}
+  .content{padding:28px 24px 60px; max-width:1180px; width:100%; margin:0 auto}
 
-  .chips-empty{
-    background:var(--white); border-radius:12px; padding:18px;
-    color:var(--muted); font-size:.9rem; text-align:center;
-    box-shadow:var(--shadow);
-  }
+  .greeting{margin:0 0 4px; font-size:1.7rem; color:var(--forest); letter-spacing:.2px}
+  .tagline{margin:0 0 26px; color:var(--muted); font-size:.95rem}
 
-  /* ── Recipe suggestions ─────────────────────────────────── */
-  .recipes{
+  /* ---------- Stat cards ---------- */
+  .stats{
     display:grid; gap:16px;
-    grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns:repeat(auto-fit, minmax(200px,1fr));
+    margin-bottom:32px;
   }
-  .recipe{
+  .stat{
     background:var(--white); border-radius:var(--radius);
-    box-shadow:var(--shadow); padding:18px;
-    display:flex; flex-direction:column; gap:10px;
-    border-top:5px solid var(--sage);
+    padding:20px 20px 18px; box-shadow:var(--shadow-sm);
+    border-left:5px solid var(--sage); position:relative;
   }
-  .recipe .rhead{display:flex; align-items:center; gap:8px}
-  .recipe .remoji{font-size:1.5rem}
-  .recipe h4{margin:0; color:var(--forest); font-size:1rem}
-  .recipe .match{
-    margin-left:auto; font-size:.7rem; font-weight:700;
+  .stat .lbl{
+    font-size:.76rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); font-weight:600;
+  }
+  .stat .val{
+    font-size:2rem; font-weight:800; color:var(--forest);
+    line-height:1.1; margin-top:6px;
+  }
+  .stat.warn{border-left-color:var(--butter)}
+  .stat.danger{border-left-color:var(--danger)}
+  .stat .sub{font-size:.78rem; color:var(--muted); margin-top:6px}
+
+  /* ---------- Section ---------- */
+  .section-head{
+    display:flex; align-items:center; gap:10px;
+    margin:32px 0 14px;
+  }
+  .section-head h2{
+    margin:0; font-size:1rem; text-transform:uppercase;
+    letter-spacing:.07em; color:var(--forest);
+  }
+  .badge{
     background:var(--sage); color:var(--forest);
-    padding:3px 8px; border-radius:999px;
-  }
-  .recipe .match.low{background:var(--butter)}
-  .recipe .ing{font-size:.85rem; color:var(--ink); line-height:1.6}
-  .recipe .ing .have{color:var(--forest); font-weight:600}
-  .recipe .ing .miss{color:var(--muted); text-decoration:line-through}
-  .recipe .steps{font-size:.8rem; color:var(--muted); line-height:1.6}
-
-  .recipes-empty{
-    background:var(--white); border-radius:12px; padding:18px;
-    color:var(--muted); font-size:.9rem; text-align:center;
-    box-shadow:var(--shadow);
+    font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:999px;
   }
 
-  /* ── Quick links ────────────────────────────────────────── */
+  /* ---------- Panels ---------- */
+  .panel{
+    background:var(--white); border-radius:var(--radius);
+    box-shadow:var(--shadow-sm); overflow:hidden;
+  }
+  .panel-row{
+    display:grid; gap:20px;
+    grid-template-columns:1fr 1fr;
+  }
+
+  /* Alerts list */
+  .alert-list{list-style:none; margin:0; padding:6px 0}
+  .alert-list li{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 18px; border-bottom:1px solid var(--line);
+    font-size:.92rem;
+  }
+  .alert-list li:last-child{border-bottom:0}
+  .alert-list .dot{
+    width:9px; height:9px; border-radius:50%;
+    background:var(--butter); flex:0 0 auto;
+  }
+  .alert-list li.danger .dot{background:var(--danger)}
+  .alert-list .meta{margin-left:auto; color:var(--muted); font-size:.82rem; white-space:nowrap}
+  .alert-list .empty{
+    padding:22px 18px; color:var(--muted); font-size:.9rem; text-align:center;
+  }
+
+  /* Recent activity / grocery preview */
+  .mini-table{width:100%; border-collapse:collapse; font-size:.9rem}
+  .mini-table th, .mini-table td{
+    text-align:left; padding:11px 18px; border-bottom:1px solid var(--line);
+  }
+  .mini-table th{
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.07em;
+    color:var(--muted); font-weight:600; background:#FBFCF8;
+  }
+  .mini-table td.qty{color:var(--muted); white-space:nowrap}
+  .mini-table tr:last-child td{border-bottom:0}
+  .status-pill{
+    display:inline-block; padding:2px 10px; border-radius:999px;
+    font-size:.72rem; font-weight:700; letter-spacing:.02em;
+  }
+  .status-pill.active{background:var(--sage-soft); color:var(--forest)}
+  .status-pill.used{background:#EEE; color:#666}
+  .status-pill.expired{background:var(--danger-soft); color:var(--danger)}
+  .empty-note{padding:22px 18px; color:var(--muted); font-size:.9rem; text-align:center}
+
+  /* Quick actions */
   .quick{
-    margin-top:32px; display:grid; gap:18px;
-    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    margin-top:36px;
+    display:grid; gap:16px;
+    grid-template-columns:repeat(auto-fit, minmax(240px,1fr));
   }
   .quick a.cta{
     display:block; background:var(--white); border-radius:var(--radius);
-    padding:24px; text-decoration:none; color:var(--ink);
-    box-shadow:var(--shadow); border:1.5px solid transparent;
-    transition:transform .12s, border-color .15s;
+    padding:22px; text-decoration:none; color:var(--ink);
+    box-shadow:var(--shadow-sm); border:1.5px solid transparent;
+    transition:transform .12s, border-color .15s, box-shadow .15s;
   }
-  .quick a.cta:hover{transform:translateY(-2px); border-color:var(--sage)}
-  .quick a.cta .icon{font-size:1.6rem; margin-bottom:8px}
-  .quick a.cta h4{margin:0 0 4px; color:var(--forest); font-size:1.1rem}
-  .quick a.cta p{margin:0; color:var(--muted); font-size:.9rem}
+  .quick a.cta:hover{
+    transform:translateY(-2px); border-color:var(--sage);
+    box-shadow:var(--shadow);
+  }
+  .quick .ic{font-size:1.6rem; margin-bottom:8px}
+  .quick h4{margin:0 0 4px; font-size:1.02rem; color:var(--forest)}
+  .quick p{margin:0; color:var(--muted); font-size:.88rem; line-height:1.5}
 
-  .status{margin:20px 0 0; font-size:.9rem; color:var(--muted); min-height:1.2em}
+  /* Status line */
+  .status{
+    min-height:1.2em; margin-top:20px;
+    font-size:.88rem; color:var(--muted);
+  }
   .status.error{color:var(--danger)}
+
+  /* ---------- Mobile ---------- */
+  .backdrop{
+    display:none; position:fixed; inset:0;
+    background:rgba(35,75,58,.35); z-index:35;
+  }
+  @media (max-width:900px){
+    .sidebar{
+      transform:translateX(-100%); transition:transform .25s ease;
+      box-shadow:var(--shadow);
+    }
+    .sidebar.open{transform:translateX(0)}
+    .main{margin-left:0}
+    .topbar .hamburger{display:inline-flex; align-items:center; justify-content:center}
+    .backdrop.show{display:block}
+    .panel-row{grid-template-columns:1fr}
+  }
+  @media (max-width:480px){
+    .content{padding:20px 16px 60px}
+    .greeting{font-size:1.35rem}
+    .stat .val{font-size:1.7rem}
+    .topbar{padding:0 14px}
+    .user-chip .name{display:none}
+  }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="logo">🌿 MyGrocer<span>.</span></div>
-  <nav class="links">
-    <a href="/dashboard.html" class="active">Dashboard</a>
-    <a href="/kitchen.html">Kitchen</a>
-    <a href="/shopping.html">Shopping</a>
-    <button id="logoutBtn" type="button">Sign out</button>
-  </nav>
-</header>
 
-<main class="wrap">
-  <h1 class="greeting" id="greeting">Welcome</h1>
-  <p class="tagline">Less waste, more taste — here's your kitchen at a glance.</p>
+<div class="shell">
 
-  <section class="grid" aria-label="Overview">
-    <div class="card">
-      <h3>Active groceries</h3>
-      <div class="num" id="countActive">—</div>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+    <div class="brand"><span class="leaf">🌿</span> MyGrocer<span>.</span></div>
+    <nav class="side-nav">
+      <a href="/dashboard.html" class="active" aria-current="page">
+        <span class="ic">📊</span> Dashboard
+      </a>
+      <a href="/kitchen.html"><span class="ic">🍅</span> Kitchen</a>
+      <a href="/shopping.html"><span class="ic">🛒</span> Shopping</a>
+    </nav>
+    <div class="sidebar-foot">
+      <button id="logoutBtn" type="button">
+        <span class="ic">↩︎</span> Sign out
+      </button>
     </div>
-    <div class="card danger">
-      <h3>Expired</h3>
-      <div class="num" id="countExpired">—</div>
-    </div>
-    <div class="card warn">
-      <h3>Shopping — remaining</h3>
-      <div class="num" id="countRemaining">—</div>
-    </div>
-    <div class="card">
-      <h3>Shopping — purchased</h3>
-      <div class="num" id="countPurchased">—</div>
-    </div>
-  </section>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
 
-  <!-- Existing items as small chips -->
-  <h2 class="section">
-    Your groceries
-    <span class="badge" id="chipCount">0</span>
-  </h2>
-  <div id="chips" class="chips" aria-live="polite"></div>
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="menuBtn" type="button" aria-label="Open menu">☰</button>
+      <h1>Dashboard</h1>
+      <div class="spacer"></div>
+      <div class="user-chip" title="Signed in">
+        <div class="avatar" id="avatar">?</div>
+        <span class="name" id="userName">—</span>
+      </div>
+    </header>
 
-  <!-- Recipe suggestions from what you own -->
-  <h2 class="section">
-    Recipes you can make
-    <span class="badge" id="recipeCount">0</span>
-  </h2>
-  <div id="recipes" class="recipes" aria-live="polite"></div>
+    <main class="content">
+      <h2 class="greeting" id="greeting">Welcome</h2>
+      <p class="tagline">Your kitchen at a glance — inventory, expiries and shopping, all in one place.</p>
 
-  <section class="quick" aria-label="Quick links">
-    <a class="cta" href="/kitchen.html">
-      <div class="icon">🍅</div>
-      <h4>Kitchen Inventory</h4>
-      <p>See what you own, what's expiring, and what you've used.</p>
-    </a>
-    <a class="cta" href="/shopping.html">
-      <div class="icon">🛒</div>
-      <h4>Shopping List</h4>
-      <p>Add items, tick them off, and never double-buy again.</p>
-    </a>
-  </section>
+      <!-- Stat cards -->
+      <section class="stats" aria-label="Overview">
+        <div class="stat">
+          <div class="lbl">Active groceries</div>
+          <div class="val" id="countActive">—</div>
+          <div class="sub" id="subActive">in your kitchen</div>
+        </div>
+        <div class="stat warn">
+          <div class="lbl">Expiring soon</div>
+          <div class="val" id="countSoon">—</div>
+          <div class="sub">within 3 days</div>
+        </div>
+        <div class="stat danger">
+          <div class="lbl">Expired</div>
+          <div class="val" id="countExpired">—</div>
+          <div class="sub">needs attention</div>
+        </div>
+        <div class="stat">
+          <div class="lbl">Shopping to buy</div>
+          <div class="val" id="countRemaining">—</div>
+          <div class="sub" id="subPurchased">0 purchased</div>
+        </div>
+      </section>
 
-  <p class="status" id="status" role="status" aria-live="polite"></p>
-</main>
+      <!-- Alerts + preview -->
+      <div class="panel-row">
+
+        <!-- Low stock / expiry alerts -->
+        <section>
+          <div class="section-head">
+            <h2>Alerts</h2>
+            <span class="badge" id="alertCount">0</span>
+          </div>
+          <div class="panel">
+            <ul class="alert-list" id="alertList" aria-live="polite"></ul>
+          </div>
+        </section>
+
+        <!-- Recent groceries -->
+        <section>
+          <div class="section-head">
+            <h2>Recent groceries</h2>
+            <span class="badge" id="recentCount">0</span>
+          </div>
+          <div class="panel">
+            <table class="mini-table" aria-live="polite">
+              <thead>
+                <tr><th>Item</th><th>Qty</th><th>Status</th></tr>
+              </thead>
+              <tbody id="recentBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Quick links -->
+      <section class="quick" aria-label="Quick links">
+        <a class="cta" href="/kitchen.html">
+          <div class="ic">🍅</div>
+          <h4>Kitchen Inventory</h4>
+          <p>Manage items, track expiries, and generate AI recipes.</p>
+        </a>
+        <a class="cta" href="/shopping.html">
+          <div class="ic">🛒</div>
+          <h4>Shopping List</h4>
+          <p>Plan your trip and find nearby grocery stores on the map.</p>
+        </a>
+      </section>
+
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+</div>
 
 <script>
 (function () {
   "use strict";
 
-  /* ── CSRF-aware fetch helper (same as other pages) ──────── */
+  /* ---------- CSRF-aware fetch (same pattern as login/register) ---------- */
   function getCookie(name) {
     const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return m ? decodeURIComponent(m[1]) : "";
   }
   async function api(path, opts) {
     opts = opts || {};
-    const headers = Object.assign(
-      { "Accept": "application/json" },
-      opts.headers || {}
-    );
+    const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
     const method = (opts.method || "GET").toUpperCase();
     if (opts.body) headers["Content-Type"] = "application/json";
     if (method !== "GET" && method !== "HEAD") {
@@ -246,228 +386,136 @@
     statusEl.className = "status" + (isErr ? " error" : "");
   }
 
-  /* ── Built-in recipe catalogue ────────────────────────────
-     Each ingredient is a "keyword". We lowercase both sides
-     and do a substring match, so "cherry tomatoes" also
-     matches "tomato". Add more recipes here freely.         */
-  const RECIPES = [
-    {
-      emoji: "🍝",
-      name: "Quick Tomato Pasta",
-      ingredients: ["tomato", "pasta", "garlic", "olive oil"],
-      steps: "Boil pasta. Sauté garlic in oil, add tomatoes, simmer 8 min, toss with pasta."
-    },
-    {
-      emoji: "🥗",
-      name: "Fresh Garden Salad",
-      ingredients: ["lettuce", "cucumber", "tomato", "onion", "olive oil"],
-      steps: "Chop everything, drizzle with olive oil, salt and pepper to taste."
-    },
-    {
-      emoji: "🍳",
-      name: "Veggie Omelette",
-      ingredients: ["egg", "onion", "tomato", "cheese"],
-      steps: "Whisk eggs, pour into hot pan, add veggies and cheese, fold and serve."
-    },
-    {
-      emoji: "🍚",
-      name: "Simple Fried Rice",
-      ingredients: ["rice", "egg", "onion", "carrot", "soy sauce"],
-      steps: "Cook rice. Scramble egg, stir-fry veggies, add rice and soy sauce."
-    },
-    {
-      emoji: "🥣",
-      name: "Creamy Potato Soup",
-      ingredients: ["potato", "onion", "milk", "butter"],
-      steps: "Boil potatoes with onion, blend, stir in milk and butter, season."
-    },
-    {
-      emoji: "🌮",
-      name: "Bean Tacos",
-      ingredients: ["beans", "tortilla", "tomato", "onion", "cheese"],
-      steps: "Warm beans, fill tortillas, top with tomato, onion and cheese."
-    },
-    {
-      emoji: "🍲",
-      name: "Chicken Stir-fry",
-      ingredients: ["chicken", "pepper", "onion", "soy sauce", "garlic"],
-      steps: "Stir-fry chicken until golden, add veggies, garlic and soy sauce."
-    },
-    {
-      emoji: "🍞",
-      name: "Cheesy Toast",
-      ingredients: ["bread", "cheese", "butter", "tomato"],
-      steps: "Butter bread, top with cheese and tomato, grill until melted."
-    },
-    {
-      emoji: "🥤",
-      name: "Fruit Smoothie",
-      ingredients: ["banana", "milk", "yogurt", "apple"],
-      steps: "Blend fruit with milk and yogurt until smooth."
-    },
-    {
-      emoji: "🍜",
-      name: "Veggie Noodle Bowl",
-      ingredients: ["noodles", "carrot", "onion", "soy sauce", "garlic"],
-      steps: "Cook noodles. Sauté veggies, add noodles, soy sauce and garlic."
-    },
-    {
-      emoji: "🥘",
-      name: "Chickpea Curry",
-      ingredients: ["chickpea", "tomato", "onion", "garlic", "rice"],
-      steps: "Sauté onion and garlic, add tomato and chickpeas, simmer, serve over rice."
-    },
-    {
-      emoji: "🍅",
-      name: "Tomato & Cheese Sandwich",
-      ingredients: ["bread", "tomato", "cheese", "butter"],
-      steps: "Butter bread, layer tomato and cheese, toast or serve fresh."
-    }
-  ];
-
-  /* ── Render compact grocery chips ───────────────────────── */
+  /* ---------- Date helpers ---------- */
   function daysUntil(iso) {
     if (!iso) return null;
     const exp = new Date(iso + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     return Math.round((exp - today) / 86400000);
   }
+  function humaniseExpiry(iso) {
+    const d = daysUntil(iso);
+    if (d === null) return "No expiry";
+    if (d < 0) return Math.abs(d) + "d overdue";
+    if (d === 0) return "Expires today";
+    if (d === 1) return "1 day left";
+    return d + " days left";
+  }
 
-  function renderChips(items) {
-    const box = document.getElementById("chips");
-    box.replaceChildren();
-    document.getElementById("chipCount").textContent = String(items.length);
+  /* ---------- Sidebar (mobile) ---------- */
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  const menuBtn = document.getElementById("menuBtn");
+  menuBtn.addEventListener("click", function () {
+    sidebar.classList.add("open"); backdrop.classList.add("show");
+  });
+  backdrop.addEventListener("click", function () {
+    sidebar.classList.remove("open"); backdrop.classList.remove("show");
+  });
 
-    if (items.length === 0) {
-      const e = document.createElement("div");
-      e.className = "chips-empty";
-      e.textContent = "No groceries yet. Add items in the Kitchen page.";
-      box.appendChild(e);
-      return;
-    }
+  /* ---------- Renderers ---------- */
+  function renderGreeting(user) {
+    const first = (user && user.name || "").trim().split(/\s+/)[0] || "there";
+    document.getElementById("greeting").textContent = "Hi, " + first + " 👋";
+    document.getElementById("userName").textContent = user && user.name || "";
+    const av = document.getElementById("avatar");
+    av.textContent = first.charAt(0).toUpperCase();
+  }
+
+  function renderStats(items, shopping) {
+    let active = 0, soon = 0, expired = 0;
+    items.forEach(function (it) {
+      if (it.status === "active") active++;
+      if (it.status === "expired") expired++;
+      const d = daysUntil(it.expiry_date);
+      if (it.status === "active" && d !== null && d >= 0 && d <= 3) soon++;
+    });
+    document.getElementById("countActive").textContent = String(active);
+    document.getElementById("countSoon").textContent = String(soon);
+    document.getElementById("countExpired").textContent = String(expired);
+    document.getElementById("countRemaining").textContent = String(shopping.remaining || 0);
+    document.getElementById("subPurchased").textContent =
+      String(shopping.purchased || 0) + " purchased";
+  }
+
+  function renderAlerts(items) {
+    const list = document.getElementById("alertList");
+    list.replaceChildren();
+    const alerts = [];
 
     items.forEach(function (it) {
+      if (it.status !== "active") return;
       const d = daysUntil(it.expiry_date);
-      const chip = document.createElement("span");
-      chip.className = "chip";
-      if (it.status === "expired" || (d !== null && d < 0)) chip.classList.add("expired");
-      else if (it.status === "used") chip.classList.add("used");
-      else if (d !== null && d <= 3) chip.classList.add("soon");
-
-      const dot = document.createElement("span");
-      dot.className = "dot";
-
-      const name = document.createElement("span");
-      name.textContent = it.item_name;
-
-      const qty = document.createElement("span");
-      qty.className = "qty";
-      qty.textContent = "×" + it.quantity;
-
-      chip.append(dot, name, qty);
-      box.appendChild(chip);
-    });
-  }
-
-  /* ── Match recipes against owned ingredient names ───────── */
-  function matchRecipes(items) {
-    // Only consider active groceries as "owned"
-    const owned = items
-      .filter(function (i) { return i.status === "active"; })
-      .map(function (i) { return i.item_name.toLowerCase(); });
-
-    const results = [];
-    RECIPES.forEach(function (r) {
-      const have = [];
-      const miss = [];
-      r.ingredients.forEach(function (ing) {
-        const found = owned.some(function (own) {
-          return own.indexOf(ing) !== -1 || ing.indexOf(own) !== -1;
-        });
-        (found ? have : miss).push(ing);
-      });
-      if (have.length === 0) return; // skip recipes with zero matches
-      results.push({
-        recipe: r,
-        have: have,
-        miss: miss,
-        score: have.length / r.ingredients.length,
-      });
+      if (d === null) return;
+      if (d < 0) {
+        alerts.push({ name: it.item_name, msg: "Expired " + Math.abs(d) + " day(s) ago", cls: "danger" });
+      } else if (d <= 3) {
+        alerts.push({ name: it.item_name, msg: d === 0 ? "Expires today" : "Expires in " + d + " day(s)", cls: "" });
+      }
     });
 
-    // Sort: most matches first, fewest missing first
-    results.sort(function (a, b) {
-      if (b.have.length !== a.have.length) return b.have.length - a.have.length;
-      return a.miss.length - b.miss.length;
+    // Low stock (quantity 1) as gentle warning
+    items.forEach(function (it) {
+      if (it.status === "active" && it.quantity <= 1) {
+        alerts.push({ name: it.item_name, msg: "Low stock (1 left)", cls: "" });
+      }
     });
 
-    return results.slice(0, 6); // top 6
-  }
+    document.getElementById("alertCount").textContent = String(alerts.length);
 
-  function renderRecipes(items) {
-    const box = document.getElementById("recipes");
-    box.replaceChildren();
-    const matches = matchRecipes(items);
-    document.getElementById("recipeCount").textContent = String(matches.length);
-
-    if (matches.length === 0) {
-      const e = document.createElement("div");
-      e.className = "recipes-empty";
-      e.textContent = "Add some groceries and we'll suggest recipes you can make.";
-      box.appendChild(e);
+    if (alerts.length === 0) {
+      const li = document.createElement("li");
+      li.className = "empty";
+      li.textContent = "All clear — nothing expiring or low on stock.";
+      list.appendChild(li);
       return;
     }
 
-    matches.forEach(function (m) {
-      const card = document.createElement("article");
-      card.className = "recipe";
-
-      const head = document.createElement("div");
-      head.className = "rhead";
-
-      const emoji = document.createElement("span");
-      emoji.className = "remoji";
-      emoji.textContent = m.recipe.emoji;
-
-      const h4 = document.createElement("h4");
-      h4.textContent = m.recipe.name;
-
-      const badge = document.createElement("span");
-      badge.className = "match" + (m.score < 0.5 ? " low" : "");
-      badge.textContent = m.have.length + "/" + m.recipe.ingredients.length;
-
-      head.append(emoji, h4, badge);
-
-      const ing = document.createElement("div");
-      ing.className = "ing";
-      m.have.forEach(function (x, i) {
-        if (i > 0) ing.appendChild(document.createTextNode(", "));
-        const s = document.createElement("span");
-        s.className = "have";
-        s.textContent = "✓ " + x;
-        ing.appendChild(s);
-      });
-      m.miss.forEach(function (x) {
-        if (m.have.length > 0 || ing.childNodes.length > 0) {
-          ing.appendChild(document.createTextNode(", "));
-        }
-        const s = document.createElement("span");
-        s.className = "miss";
-        s.textContent = x;
-        ing.appendChild(s);
-      });
-
-      const steps = document.createElement("div");
-      steps.className = "steps";
-      steps.textContent = m.recipe.steps;
-
-      card.append(head, ing, steps);
-      box.appendChild(card);
+    alerts.slice(0, 8).forEach(function (a) {
+      const li = document.createElement("li");
+      if (a.cls) li.classList.add(a.cls);
+      const dot = document.createElement("span"); dot.className = "dot";
+      const name = document.createElement("span"); name.textContent = a.name;
+      const meta = document.createElement("span"); meta.className = "meta"; meta.textContent = a.msg;
+      li.append(dot, name, meta);
+      list.appendChild(li);
     });
   }
 
-  /* ── Loaders ────────────────────────────────────────────── */
+  function renderRecent(items) {
+    const body = document.getElementById("recentBody");
+    body.replaceChildren();
+    document.getElementById("recentCount").textContent = String(items.length);
+
+    if (items.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 3; td.className = "empty-note";
+      td.textContent = "No groceries yet. Add some in Kitchen.";
+      tr.appendChild(td); body.appendChild(tr);
+      return;
+    }
+
+    items.slice(0, 6).forEach(function (it) {
+      const tr = document.createElement("tr");
+      const name = document.createElement("td");
+      name.textContent = it.item_name;
+
+      const qty = document.createElement("td");
+      qty.className = "qty"; qty.textContent = "×" + it.quantity;
+
+      const st = document.createElement("td");
+      const pill = document.createElement("span");
+      pill.className = "status-pill " + it.status;
+      pill.textContent = it.status;
+      st.appendChild(pill);
+
+      tr.append(name, qty, st);
+      body.appendChild(tr);
+    });
+  }
+
+  /* ---------- Loaders ---------- */
   async function loadMe() {
     const r = await api("/api/me");
     if (!r.ok) {
@@ -486,43 +534,26 @@
       window.location.assign("/");
       return;
     }
-
-    let active = 0, expired = 0;
-    let groceryItems = [];
-    if (g.ok && g.data && Array.isArray(g.data.items)) {
-      groceryItems = g.data.items;
-      groceryItems.forEach(function (it) {
-        if (it.status === "active") active++;
-        if (it.status === "expired") expired++;
-      });
-    }
-    let remaining = 0, purchased = 0;
-    if (s.ok && s.data) {
-      remaining = s.data.remaining || 0;
-      purchased = s.data.purchased || 0;
-    }
-
-    document.getElementById("countActive").textContent = String(active);
-    document.getElementById("countExpired").textContent = String(expired);
-    document.getElementById("countRemaining").textContent = String(remaining);
-    document.getElementById("countPurchased").textContent = String(purchased);
-
-    renderChips(groceryItems);
-    renderRecipes(groceryItems);
+    const items = (g.ok && g.data && Array.isArray(g.data.items)) ? g.data.items : [];
+    const shopping = (s.ok && s.data) ? { remaining: s.data.remaining, purchased: s.data.purchased } : {};
+    renderStats(items, shopping);
+    renderAlerts(items);
+    renderRecent(items);
   }
 
+  /* ---------- Logout ---------- */
   document.getElementById("logoutBtn").addEventListener("click", async function () {
     try { await api("/api/logout", { method: "POST" }); } catch (e) {}
     window.location.assign("/");
   });
 
+  /* ---------- Init ---------- */
   (async function init() {
     try {
       setStatus("Loading…");
       const user = await loadMe();
       if (!user) return;
-      const first = (user.name || "").trim().split(/\s+/)[0] || "there";
-      document.getElementById("greeting").textContent = "Hi, " + first + " 👋";
+      renderGreeting(user);
       await loadAll();
       setStatus("");
     } catch (e) {

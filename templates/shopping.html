@@ -3,180 +3,462 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MyGrocer — Shopping List</title>
+<title>MyGrocer — Shopping</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <style>
   :root{
-    --ivory:#FAF9F2; --forest:#234B3A; --sage:#A8BE91;
-    --butter:#F0D987; --ink:#292E29; --white:#ffffff;
-    --danger:#B23A2E; --muted:#6B756B;
-    --shadow:0 8px 24px rgba(35,75,58,.10);
-    --radius:16px;
+    --ivory:#FAF9F2; --forest:#234B3A; --forest-dark:#1B3B2D;
+    --sage:#A8BE91; --sage-soft:#E7EEDD; --butter:#F0D987;
+    --ink:#292E29; --white:#ffffff; --muted:#6B756B;
+    --danger:#B23A2E; --danger-soft:#FDECEB;
+    --line:#E4E9E0; --shadow:0 8px 24px rgba(35,75,58,.08);
+    --shadow-sm:0 2px 8px rgba(35,75,58,.06);
+    --radius:16px; --radius-sm:12px;
+    --sidebar-w:250px; --topbar-h:64px;
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    background:var(--ivory); color:var(--ink); min-height:100vh;
+    background:var(--ivory); color:var(--ink); -webkit-font-smoothing:antialiased;
   }
-  header.top{
+  a{color:inherit}
+  :focus-visible{outline:3px solid var(--sage); outline-offset:2px}
+
+  /* ---------- Layout ---------- */
+  .shell{display:flex; min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:var(--sidebar-w); flex:0 0 var(--sidebar-w);
     background:var(--forest); color:var(--ivory);
-    padding:16px 24px; display:flex; align-items:center; gap:16px;
-    box-shadow:var(--shadow); position:sticky; top:0; z-index:5;
+    display:flex; flex-direction:column;
+    position:fixed; inset:0 auto 0 0; z-index:40;
+    padding:20px 16px;
   }
-  header.top .logo{font-size:1.25rem; font-weight:800; letter-spacing:.4px}
-  header.top .logo span{color:var(--butter)}
-  nav.links{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap}
-  nav.links a{
-    color:var(--ivory); text-decoration:none; padding:8px 12px; border-radius:10px;
-    font-size:.9rem; opacity:.9; transition:background .15s;
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-size:1.15rem; font-weight:800; letter-spacing:.3px;
+    padding:6px 8px 20px;
   }
-  nav.links a:hover{background:rgba(255,255,255,.12)}
-  nav.links a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
-  nav.links button{
-    background:transparent; color:var(--ivory); border:1px solid rgba(255,255,255,.4);
-    padding:8px 12px; border-radius:10px; cursor:pointer; font-size:.9rem;
+  .brand .leaf{font-size:1.4rem}
+  .brand span{color:var(--butter)}
+  .side-nav{display:flex; flex-direction:column; gap:4px; margin-top:8px}
+  .side-nav a{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 12px; border-radius:10px;
+    text-decoration:none; color:var(--ivory);
+    font-size:.93rem; opacity:.85; transition:background .15s, opacity .15s;
   }
-  nav.links button:hover{background:rgba(255,255,255,.12)}
-
-  main.wrap{max-width:900px; margin:0 auto; padding:32px 24px 60px}
-  h1{margin:0 0 6px; color:var(--forest); font-size:1.7rem}
-  .sub{margin:0 0 24px; color:var(--muted)}
-
-  .stats{display:grid; gap:14px; grid-template-columns:repeat(3,1fr); margin-bottom:22px}
-  .stat{
-    background:var(--white); border-radius:var(--radius); padding:16px;
-    box-shadow:var(--shadow); border-left:5px solid var(--sage); text-align:center;
-  }
-  .stat .lbl{font-size:.75rem; text-transform:uppercase; color:var(--muted); letter-spacing:.05em}
-  .stat .val{font-size:1.7rem; font-weight:800; color:var(--forest); margin-top:4px}
-  .stat.warn{border-left-color:var(--butter)}
-  .stat.done{border-left-color:var(--sage); opacity:.9}
-
-  form.add{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:18px; display:grid; gap:12px; grid-template-columns:2fr 1fr auto;
-    align-items:end; margin-bottom:22px;
-  }
-  form.add label{display:block; font-weight:600; font-size:.85rem; margin-bottom:6px}
-  form.add input{
-    width:100%; padding:11px 12px; font-size:1rem;
-    border:1.5px solid #dfe4dc; border-radius:12px; outline:none;
-    background:#fff; color:var(--ink); transition:border .15s, box-shadow .15s;
-  }
-  form.add input:focus{border-color:var(--sage); box-shadow:0 0 0 3px rgba(168,190,145,.35)}
-  button.primary{
-    background:var(--forest); color:var(--ivory); border:0; border-radius:12px;
-    padding:12px 18px; font-weight:700; cursor:pointer; font-size:.95rem;
+  .side-nav a:hover{background:rgba(255,255,255,.08); opacity:1}
+  .side-nav a.active{background:var(--sage); color:var(--forest); font-weight:700; opacity:1}
+  .side-nav a .ic{width:20px; text-align:center; font-size:1rem}
+  .sidebar-foot{margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,.12)}
+  .sidebar-foot button{
+    width:100%; display:flex; align-items:center; gap:10px;
+    background:transparent; color:var(--ivory);
+    border:1px solid rgba(255,255,255,.3);
+    padding:10px 12px; border-radius:10px; font-size:.9rem; cursor:pointer;
     transition:background .15s;
   }
-  button.primary:hover{background:#1b3b2d}
+  .sidebar-foot button:hover{background:rgba(255,255,255,.1)}
+
+  /* ---------- Main ---------- */
+  .main{
+    margin-left:var(--sidebar-w); flex:1;
+    display:flex; flex-direction:column; min-width:0;
+  }
+  .topbar{
+    height:var(--topbar-h); display:flex; align-items:center;
+    gap:16px; padding:0 24px;
+    background:var(--white); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:30;
+  }
+  .topbar .hamburger{
+    display:none; background:transparent; border:0; font-size:1.4rem;
+    color:var(--forest); cursor:pointer; padding:4px 8px; border-radius:8px;
+  }
+  .topbar h1{margin:0; font-size:1.05rem; font-weight:700; color:var(--forest)}
+  .topbar .spacer{flex:1}
+  .user-chip{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 12px 6px 6px; border-radius:999px;
+    background:var(--sage-soft); color:var(--forest);
+    font-size:.88rem; font-weight:600;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--forest); color:var(--ivory);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.85rem;
+  }
+  .content{padding:28px 24px 60px; max-width:1180px; width:100%; margin:0 auto}
+
+  /* ---------- Headings ---------- */
+  .greeting{margin:0 0 4px; font-size:1.6rem; color:var(--forest)}
+  .tagline{margin:0 0 22px; color:var(--muted); font-size:.95rem}
+
+  /* ---------- Stats ---------- */
+  .stats{
+    display:grid; gap:14px;
+    grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+    margin-bottom:22px;
+  }
+  .stat{
+    background:var(--white); border-radius:var(--radius);
+    padding:16px 18px; box-shadow:var(--shadow-sm);
+    border-left:5px solid var(--sage);
+  }
+  .stat .lbl{
+    font-size:.75rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--muted); font-weight:600;
+  }
+  .stat .val{
+    font-size:1.7rem; font-weight:800; color:var(--forest);
+    line-height:1.1; margin-top:4px;
+  }
+  .stat.warn{border-left-color:var(--butter)}
+  .stat.done{border-left-color:var(--muted); opacity:.9}
+
+  /* ---------- Add form ---------- */
+  .add-card{
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+    padding:20px; margin-bottom:22px;
+  }
+  .add-card h2{
+    margin:0 0 14px; font-size:.95rem; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--forest);
+  }
+  form.add{
+    display:grid; gap:14px;
+    grid-template-columns:2fr 1fr auto;
+    align-items:end;
+  }
+  .field label{
+    display:block; font-weight:600; font-size:.82rem; margin-bottom:6px;
+    color:var(--ink); letter-spacing:.02em;
+  }
+  .field input{
+    width:100%; padding:11px 12px; font-size:.95rem;
+    border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink); outline:none;
+    transition:border .15s, box-shadow .15s;
+  }
+  .field input:focus{border-color:var(--sage); box-shadow:0 0 0 3px rgba(168,190,145,.3)}
+  button.primary{
+    background:var(--forest); color:var(--ivory); border:0; border-radius:10px;
+    padding:12px 20px; font-weight:700; cursor:pointer; font-size:.92rem;
+    transition:background .15s;
+  }
+  button.primary:hover{background:var(--forest-dark)}
   button.primary[disabled]{opacity:.6; cursor:wait}
 
-  .msg{min-height:20px; margin:0 0 18px; font-size:.9rem; border-radius:10px; padding:10px 12px; display:none}
+  /* ---------- Message ---------- */
+  .msg{
+    min-height:20px; margin:0 0 18px; font-size:.9rem;
+    border-radius:10px; padding:10px 14px; display:none;
+  }
   .msg.show{display:block}
-  .msg.error{background:#fdeceb; color:var(--danger); border:1px solid #f2c6c1}
-  .msg.ok{background:#eaf3e4; color:var(--forest); border:1px solid #cfe0c0}
+  .msg.error{background:var(--danger-soft); color:var(--danger); border:1px solid #F2C6C1}
+  .msg.ok{background:var(--sage-soft); color:var(--forest); border:1px solid #CFE0C0}
 
-  h2.section{margin:26px 0 10px; color:var(--forest); font-size:1.05rem;
-             text-transform:uppercase; letter-spacing:.06em}
+  /* ---------- Sections ---------- */
+  .section-head{
+    display:flex; align-items:center; gap:10px;
+    margin:26px 0 12px;
+  }
+  .section-head h2{
+    margin:0; font-size:.9rem; text-transform:uppercase;
+    letter-spacing:.07em; color:var(--forest);
+  }
+  .badge{
+    background:var(--sage); color:var(--forest);
+    font-size:.72rem; font-weight:700; padding:2px 9px; border-radius:999px;
+  }
+
+  /* ---------- Shopping items ---------- */
   .list{display:grid; gap:10px}
   .sitem{
-    background:var(--white); border-radius:14px; box-shadow:var(--shadow);
-    padding:14px 16px; display:grid; grid-template-columns:auto 1fr auto auto;
-    gap:12px; align-items:center; border-left:5px solid var(--sage);
+    background:var(--white); border-radius:14px; box-shadow:var(--shadow-sm);
+    padding:14px 16px; display:grid;
+    grid-template-columns:auto 1fr auto auto;
+    gap:12px; align-items:center;
+    border-left:5px solid var(--sage);
   }
-  .sitem.purchased{opacity:.65; border-left-color:var(--muted)}
+  .sitem.purchased{opacity:.6; border-left-color:var(--muted)}
   .sitem.purchased .sname{text-decoration:line-through}
-  .sitem .check{width:20px; height:20px; accent-color:var(--forest); cursor:pointer}
-  .sitem .sname{font-size:1rem; font-weight:600}
+  .sitem .check{
+    width:20px; height:20px; accent-color:var(--forest); cursor:pointer;
+  }
+  .sitem .sname{font-size:.98rem; font-weight:600}
   .sitem .sqty{color:var(--muted); font-size:.9rem}
+  .sitem .smeta{font-size:.75rem; color:var(--muted); margin-top:3px}
   .sitem .actions{display:flex; gap:6px}
   .sitem .actions button{
-    border:1.5px solid #dfe4dc; background:#fff; border-radius:10px;
+    border:1.5px solid var(--line); background:#fff; border-radius:9px;
     padding:7px 10px; cursor:pointer; font-size:.85rem; color:var(--ink);
+    transition:background .15s;
   }
-  .sitem .actions button:hover{background:#f3f5ef}
-  .sitem .actions button.danger{color:var(--danger); border-color:#f2c6c1}
-  .sitem .actions button.danger:hover{background:#fdeceb}
+  .sitem .actions button:hover{background:#F3F5EF}
+  .sitem .actions button.danger{color:var(--danger); border-color:#F2C6C1}
+  .sitem .actions button.danger:hover{background:var(--danger-soft)}
 
   .empty{
-    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow);
-    padding:32px; text-align:center; color:var(--muted);
+    background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow-sm);
+    padding:32px 24px; text-align:center; color:var(--muted);
   }
-  .empty .icon{font-size:2rem; margin-bottom:6px}
+  .empty .icon{font-size:2rem; margin-bottom:8px}
+  .empty h3{margin:0 0 6px; color:var(--forest); font-size:1rem}
 
-  @media (max-width:640px){
+  /* ---------- Grocery store quick links ---------- */
+  .stores{
+    display:grid; gap:12px;
+    grid-template-columns:repeat(auto-fit, minmax(220px,1fr));
+    margin-top:28px;
+  }
+  .stores a.store{
+    display:flex; align-items:center; gap:14px;
+    background:var(--white); border-radius:var(--radius);
+    padding:16px 18px; text-decoration:none; color:var(--ink);
+    box-shadow:var(--shadow-sm); border:1.5px solid transparent;
+    transition:transform .12s, border-color .15s, box-shadow .15s;
+  }
+  .stores a.store:hover{
+    transform:translateY(-2px); border-color:var(--sage);
+    box-shadow:var(--shadow);
+  }
+  .stores .store-ic{
+    width:38px; height:38px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--sage-soft); font-size:1.2rem;
+  }
+  .stores .store-name{font-weight:700; color:var(--forest); font-size:.95rem}
+  .stores .store-note{font-size:.8rem; color:var(--muted); margin-top:2px}
+
+  /* ---------- Map ---------- */
+  .map-section{margin-top:36px}
+  .map-card{
+    background:var(--white); border-radius:var(--radius);
+    box-shadow:var(--shadow-sm); padding:18px;
+  }
+  .map-card h2{
+    margin:0 0 6px; font-size:1.05rem; color:var(--forest);
+    display:flex; align-items:center; gap:8px;
+  }
+  .map-card p.hint{
+    margin:0 0 14px; font-size:.86rem; color:var(--muted); line-height:1.5;
+  }
+  .map-controls{
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center;
+  }
+  .map-controls button{
+    border:1.5px solid var(--line); background:#fff; color:var(--ink);
+    padding:9px 14px; border-radius:10px; cursor:pointer;
+    font-size:.88rem; font-weight:600;
+    display:inline-flex; align-items:center; gap:6px;
+    transition:background .15s, border-color .15s;
+  }
+  .map-controls button:hover{background:#F3F5EF}
+  .map-controls button.primary{background:var(--forest); color:var(--ivory); border-color:var(--forest)}
+  .map-controls button.primary:hover{background:var(--forest-dark)}
+  .map-controls button[disabled]{opacity:.5; cursor:not-allowed}
+  .map-controls .radius{display:inline-flex; align-items:center; gap:6px; font-size:.85rem; font-weight:600}
+  .map-controls select{
+    padding:8px 10px; border:1.5px solid var(--line); border-radius:10px;
+    background:#fff; color:var(--ink); font-size:.88rem;
+  }
+  #mapContainer{
+    height:420px; border-radius:var(--radius-sm);
+    overflow:hidden; border:1px solid var(--line);
+    background:#EEE;
+  }
+  .map-status{
+    margin-top:10px; font-size:.85rem; color:var(--muted);
+    min-height:1.2em;
+  }
+  .map-status.error{color:var(--danger)}
+  .map-note{margin:6px 0 0; font-size:.78rem; color:var(--muted)}
+  .pop strong{display:block; margin-bottom:2px}
+  .pop div{font-size:.85rem; line-height:1.4}
+  .pop a{color:var(--forest); font-weight:600}
+
+  /* ---------- Mobile ---------- */
+  .backdrop{display:none; position:fixed; inset:0; background:rgba(35,75,58,.35); z-index:35}
+  @media (max-width:900px){
+    .sidebar{transform:translateX(-100%); transition:transform .25s ease; box-shadow:var(--shadow)}
+    .sidebar.open{transform:translateX(0)}
+    .main{margin-left:0}
+    .topbar .hamburger{display:inline-flex; align-items:center; justify-content:center}
+    .backdrop.show{display:block}
     form.add{grid-template-columns:1fr 1fr}
     form.add button.primary{grid-column:1 / -1}
-    .stats{grid-template-columns:1fr}
+    .sitem{grid-template-columns:auto 1fr auto}
+    .sitem .actions{grid-column:1 / -1; justify-content:flex-end}
+    #mapContainer{height:340px}
+  }
+  @media (max-width:480px){
+    .content{padding:20px 14px 60px}
+    .greeting{font-size:1.35rem}
+    .topbar{padding:0 14px}
+    .user-chip .name{display:none}
+    form.add{grid-template-columns:1fr}
+    .sitem{grid-template-columns:auto 1fr}
+    .sitem .sqty{grid-column:2; margin-top:-6px}
+    .sitem .actions{justify-content:stretch}
+    .sitem .actions button{flex:1}
+    #mapContainer{height:300px}
   }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="logo">🌿 MyGrocer<span>.</span></div>
-  <nav class="links">
-    <a href="/dashboard.html">Dashboard</a>
-    <a href="/kitchen.html">Kitchen</a>
-    <a href="/shopping.html" class="active">Shopping</a>
-    <button id="logoutBtn" type="button">Sign out</button>
-  </nav>
-</header>
 
-<main class="wrap">
-  <h1>Shopping List</h1>
-  <p class="sub">Plan your trip. Tick off what you've bought.</p>
+<div class="shell">
 
-  <section class="stats" aria-label="Shopping summary">
-    <div class="stat"><div class="lbl">Total</div><div class="val" id="statTotal">—</div></div>
-    <div class="stat warn"><div class="lbl">Remaining</div><div class="val" id="statRemaining">—</div></div>
-    <div class="stat done"><div class="lbl">Purchased</div><div class="val" id="statPurchased">—</div></div>
-  </section>
-
-  <form class="add" id="addForm" novalidate>
-    <div>
-      <label for="newName">Item name</label>
-      <input id="newName" type="text" maxlength="150" placeholder="e.g. Olive oil" required />
+  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+    <div class="brand"><span class="leaf">🌿</span> MyGrocer<span>.</span></div>
+    <nav class="side-nav">
+      <a href="/dashboard.html"><span class="ic">📊</span> Dashboard</a>
+      <a href="/kitchen.html"><span class="ic">🍅</span> Kitchen</a>
+      <a href="/shopping.html" class="active" aria-current="page"><span class="ic">🛒</span> Shopping</a>
+    </nav>
+    <div class="sidebar-foot">
+      <button id="logoutBtn" type="button"><span class="ic">↩︎</span> Sign out</button>
     </div>
-    <div>
-      <label for="newQty">Quantity</label>
-      <input id="newQty" type="number" min="1" max="999" value="1" required />
-    </div>
-    <button class="primary" type="submit" id="addBtn">Add item</button>
-  </form>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
 
-  <div id="msg" class="msg" role="status" aria-live="polite"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="hamburger" id="menuBtn" type="button" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <h1>Shopping List</h1>
+      <div class="spacer"></div>
+      <div class="user-chip" title="Signed in">
+        <div class="avatar" id="avatar">?</div>
+        <span class="name" id="userName">—</span>
+      </div>
+    </header>
 
-  <h2 class="section">To buy</h2>
-  <div id="remainingList" class="list" aria-live="polite"></div>
+    <main class="content">
+      <h2 class="greeting">Shopping</h2>
+      <p class="tagline">Plan your trip, tick off what you've bought, and find nearby stores to shop from.</p>
 
-  <h2 class="section">Purchased</h2>
-  <div id="purchasedList" class="list" aria-live="polite"></div>
-</main>
+      <!-- Stats -->
+      <section class="stats" aria-label="Shopping summary">
+        <div class="stat"><div class="lbl">Total</div><div class="val" id="statTotal">—</div></div>
+        <div class="stat warn"><div class="lbl">Remaining</div><div class="val" id="statRemaining">—</div></div>
+        <div class="stat done"><div class="lbl">Purchased</div><div class="val" id="statPurchased">—</div></div>
+      </section>
 
+      <!-- Add form -->
+      <div class="add-card">
+        <h2>Add an item</h2>
+        <form class="add" id="addForm" novalidate>
+          <div class="field">
+            <label for="newName">Item name</label>
+            <input id="newName" type="text" maxlength="150" placeholder="e.g. Olive oil" required />
+          </div>
+          <div class="field">
+            <label for="newQty">Quantity</label>
+            <input id="newQty" type="number" min="1" max="999" value="1" required />
+          </div>
+          <button class="primary" type="submit" id="addBtn">Add item</button>
+        </form>
+      </div>
+
+      <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+      <!-- To buy -->
+      <div class="section-head">
+        <h2>To buy</h2>
+        <span class="badge" id="remainingCount">0</span>
+      </div>
+      <div id="remainingList" class="list" aria-live="polite"></div>
+
+      <!-- Purchased -->
+      <div class="section-head">
+        <h2>Purchased</h2>
+        <span class="badge" id="purchasedCount">0</span>
+      </div>
+      <div id="purchasedList" class="list" aria-live="polite"></div>
+
+      <!-- Quick store links -->
+      <section class="stores" aria-label="Order online">
+        <a class="store" href="https://blinkit.com" target="_blank" rel="noopener">
+          <div class="store-ic">⚡</div>
+          <div>
+            <div class="store-name">Blinkit</div>
+            <div class="store-note">10-minute delivery</div>
+          </div>
+        </a>
+        <a class="store" href="https://www.zeptonow.com" target="_blank" rel="noopener">
+          <div class="store-ic">🚀</div>
+          <div>
+            <div class="store-name">Zepto</div>
+            <div class="store-note">Instant delivery</div>
+          </div>
+        </a>
+        <a class="store" href="https://www.bigbasket.com" target="_blank" rel="noopener">
+          <div class="store-ic">🧺</div>
+          <div>
+            <div class="store-name">BigBasket</div>
+            <div class="store-note">Wide selection</div>
+          </div>
+        </a>
+      </section>
+
+      <!-- Nearby stores map -->
+      <section class="map-section" aria-labelledby="mapTitle">
+        <div class="map-card">
+          <h2 id="mapTitle"><span aria-hidden="true">🗺️</span> Nearby grocery stores</h2>
+          <p class="hint">
+            Share your location to find supermarkets, grocery shops, convenience stores and
+            vegetable markets around you, using OpenStreetMap data.
+          </p>
+          <div class="map-controls">
+            <button type="button" class="primary" id="useLocationBtn">📍 Use my location</button>
+            <label class="radius" for="radiusSelect">Radius
+              <select id="radiusSelect">
+                <option value="1000">1 km</option>
+                <option value="2000" selected>2 km</option>
+                <option value="3000">3 km</option>
+                <option value="5000">5 km</option>
+              </select>
+            </label>
+            <button type="button" id="findNearbyBtn" disabled>🔍 Find nearby stores</button>
+          </div>
+          <div id="mapContainer" aria-label="Map of nearby grocery stores"></div>
+          <div id="mapStatus" class="map-status" role="status" aria-live="polite"></div>
+          <p class="map-note">
+            Store data comes from OpenStreetMap contributors via the Overpass API. It may be
+            incomplete or out of date, and opening hours are not guaranteed.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function () {
   "use strict";
 
+  /* ---------- CSRF-aware fetch ---------- */
   function getCookie(name) {
     const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return m ? decodeURIComponent(m[1]) : "";
   }
-
   async function api(path, opts) {
     opts = opts || {};
-    const headers = Object.assign(
-      { "Accept": "application/json" },
-      opts.headers || {}
-    );
+    const headers = Object.assign({ "Accept": "application/json" }, opts.headers || {});
     const method = (opts.method || "GET").toUpperCase();
     if (opts.body) headers["Content-Type"] = "application/json";
     if (method !== "GET" && method !== "HEAD") {
       headers["X-CSRFToken"] = getCookie("XSRF-TOKEN");
     }
     const res = await fetch(path, {
-      method,
-      headers,
-      credentials: "same-origin",
+      method, headers, credentials: "same-origin",
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     let data = null;
@@ -194,15 +476,36 @@
   const remainingList = document.getElementById("remainingList");
   const purchasedList = document.getElementById("purchasedList");
 
+  /* ---------- Sidebar (mobile) ---------- */
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  const menuBtn = document.getElementById("menuBtn");
+  function openMenu() {
+    sidebar.classList.add("open"); backdrop.classList.add("show");
+    menuBtn.setAttribute("aria-expanded", "true");
+  }
+  function closeMenu() {
+    sidebar.classList.remove("open"); backdrop.classList.remove("show");
+    menuBtn.setAttribute("aria-expanded", "false");
+  }
+  menuBtn.addEventListener("click", openMenu);
+  backdrop.addEventListener("click", closeMenu);
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeMenu();
+  });
+
+  /* ---------- Renderers ---------- */
   function renderEmpty(container, text) {
     container.replaceChildren();
     const e = document.createElement("div");
     e.className = "empty";
     const ic = document.createElement("div");
     ic.className = "icon"; ic.textContent = "🛒";
-    const t = document.createElement("div");
-    t.textContent = text;
-    e.append(ic, t);
+    const h = document.createElement("h3");
+    h.textContent = "Nothing here yet";
+    const p = document.createElement("p");
+    p.style.margin = "0"; p.textContent = text;
+    e.append(ic, h, p);
     container.appendChild(e);
   }
 
@@ -215,7 +518,7 @@
     cb.className = "check";
     cb.checked = !!it.is_purchased;
     cb.setAttribute("aria-label",
-      it.is_purchased ? "Mark as not purchased" : "Mark as purchased");
+      (it.is_purchased ? "Mark as not purchased: " : "Mark as purchased: ") + it.item_name);
     cb.addEventListener("change", async function () {
       clearMsg();
       cb.disabled = true;
@@ -238,9 +541,14 @@
       }
     });
 
+    const nameWrap = document.createElement("div");
     const nameEl = document.createElement("div");
     nameEl.className = "sname";
     nameEl.textContent = it.item_name;
+    const metaEl = document.createElement("div");
+    metaEl.className = "smeta";
+    metaEl.textContent = it.created_at ? "Added " + new Date(it.created_at).toLocaleDateString() : "";
+    nameWrap.append(nameEl, metaEl);
 
     const qtyEl = document.createElement("div");
     qtyEl.className = "sqty";
@@ -252,6 +560,7 @@
     const editBtn = document.createElement("button");
     editBtn.type = "button";
     editBtn.textContent = "Edit";
+    editBtn.setAttribute("aria-label", "Edit " + it.item_name);
     editBtn.addEventListener("click", async function () {
       const newName = window.prompt("Item name:", it.item_name);
       if (newName === null) return;
@@ -273,7 +582,7 @@
           body: { item_name: trimmed, quantity: newQty },
         });
         if (r.status === 401) { window.location.assign("/"); return; }
-        if (r.ok) { show("ok", "Saved."); await load(); }
+        if (r.ok) { await load(); show("ok", "Saved."); }
         else show("error", (r.data && r.data.error) || "Could not save.");
       } catch (e) {
         show("error", "Network error while saving.");
@@ -286,6 +595,7 @@
     delBtn.type = "button";
     delBtn.className = "danger";
     delBtn.textContent = "Delete";
+    delBtn.setAttribute("aria-label", "Delete " + it.item_name);
     delBtn.addEventListener("click", async function () {
       if (!window.confirm('Delete "' + it.item_name + '"?')) return;
       clearMsg();
@@ -293,7 +603,7 @@
       try {
         const r = await api("/api/shopping-items/" + it.id, { method: "DELETE" });
         if (r.status === 401) { window.location.assign("/"); return; }
-        if (r.ok) { show("ok", "Deleted."); await load(); }
+        if (r.ok) { await load(); show("ok", "Deleted."); }
         else show("error", (r.data && r.data.error) || "Could not delete.");
       } catch (e) {
         show("error", "Network error while deleting.");
@@ -303,7 +613,7 @@
     });
 
     actions.append(editBtn, delBtn);
-    row.append(cb, nameEl, qtyEl, actions);
+    row.append(cb, nameWrap, qtyEl, actions);
     return row;
   }
 
@@ -328,20 +638,24 @@
     document.getElementById("statTotal").textContent = String(items.length);
     document.getElementById("statRemaining").textContent = String(remaining.length);
     document.getElementById("statPurchased").textContent = String(purchased.length);
+    document.getElementById("remainingCount").textContent = String(remaining.length);
+    document.getElementById("purchasedCount").textContent = String(purchased.length);
   }
 
+  // Note: load() no longer clears the message, so "Added/Saved/Deleted"
+  // confirmations stay visible after the list refreshes.
   async function load() {
-    clearMsg();
     try {
       const r = await api("/api/shopping-items");
       if (r.status === 401) { window.location.assign("/"); return; }
       if (!r.ok) { show("error", "Could not load shopping list."); return; }
-      render(r.data.items || []);
+      render((r.data && r.data.items) || []);
     } catch (e) {
       show("error", "Network error while loading.");
     }
   }
 
+  /* ---------- Add form ---------- */
   const addForm = document.getElementById("addForm");
   const addBtn = document.getElementById("addBtn");
   addForm.addEventListener("submit", async function (ev) {
@@ -365,8 +679,8 @@
       if (r.ok) {
         addForm.reset();
         document.getElementById("newQty").value = "1";
-        show("ok", "Added.");
         await load();
+        show("ok", "Added.");
       } else {
         show("error", (r.data && r.data.error) || "Could not add item.");
       }
@@ -377,12 +691,331 @@
     }
   });
 
+  /* ---------- Nearby stores map (real data via Overpass) ---------- */
+  const OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+  ];
+  const OVERPASS_TIMEOUT_MS = 30000;
+  const MAX_STORES = 100;
+
+  const mapStatus = document.getElementById("mapStatus");
+  const useLocationBtn = document.getElementById("useLocationBtn");
+  const findNearbyBtn = document.getElementById("findNearbyBtn");
+  const radiusSelect = document.getElementById("radiusSelect");
+  const mapContainer = document.getElementById("mapContainer");
+
+  let map = null;
+  let userLocation = null;
+  let userMarker = null;
+  let storeLayer = null;
+  let radiusCircle = null;
+  let searching = false;
+
+  function setMapStatus(text, isErr) {
+    mapStatus.textContent = text || "";
+    mapStatus.className = "map-status" + (isErr ? " error" : "");
+  }
+
+  function ensureMap() {
+    if (map) return map;
+    map = L.map(mapContainer, { scrollWheelZoom: false }).setView([20.5937, 78.9629], 5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
+    }).addTo(map);
+    storeLayer = L.layerGroup().addTo(map);
+    return map;
+  }
+
+  function clearStoreMarkers() {
+    if (storeLayer) storeLayer.clearLayers();
+    if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  }
+
+  // Icon HTML is built only from our own constant colours/emoji, never from external data.
+  function storeIcon(color, emoji) {
+    return L.divIcon({
+      className: "custom-div-icon",
+      html:
+        "<div style='background:" + color + ";width:28px;height:28px;border-radius:50%;" +
+        "border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);" +
+        "display:flex;align-items:center;justify-content:center;font-size:13px;'>" +
+        emoji + "</div>",
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+  }
+
+  function textPopup(title) {
+    const wrap = document.createElement("div");
+    wrap.className = "pop";
+    const s = document.createElement("strong");
+    s.textContent = title;
+    wrap.appendChild(s);
+    return wrap;
+  }
+
+  function useLocation() {
+    if (!navigator.geolocation) {
+      setMapStatus("Geolocation isn't supported by this browser.", true);
+      return;
+    }
+    setMapStatus("Requesting your location…");
+    useLocationBtn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        useLocationBtn.disabled = false;
+        userLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+        ensureMap();
+        if (userMarker) map.removeLayer(userMarker);
+        userMarker = L.marker([userLocation.lat, userLocation.lng], {
+          icon: storeIcon("#234B3A", "📍"),
+        })
+          .addTo(map)
+          .bindPopup(textPopup("You are here"));
+
+        map.setView([userLocation.lat, userLocation.lng], 14);
+        findNearbyBtn.disabled = false;
+        setMapStatus("Location found. Choose a radius and select “Find nearby stores”.");
+      },
+      function (err) {
+        useLocationBtn.disabled = false;
+        let t = "Unable to get your location.";
+        if (err.code === 1) t = "Location permission denied. Enable it in your browser settings and try again.";
+        else if (err.code === 2) t = "Location unavailable. Try again in a moment.";
+        else if (err.code === 3) t = "Location request timed out. Try again.";
+        setMapStatus(t, true);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }
+
+  /* ----- Overpass query ----- */
+  async function queryOverpass(lat, lng, radius) {
+    const around = "(around:" + radius + "," + lat.toFixed(6) + "," + lng.toFixed(6) + ")";
+    const query =
+      "[out:json][timeout:25];(" +
+      'nwr["shop"~"^(supermarket|convenience|greengrocer|grocery|general)$"]' + around + ";" +
+      'nwr["amenity"="marketplace"]' + around + ";" +
+      ");out center tags 150;";
+
+    let lastErr = null;
+    for (let i = 0; i < OVERPASS_ENDPOINTS.length; i++) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(function () { ctrl.abort(); }, OVERPASS_TIMEOUT_MS);
+      try {
+        const res = await fetch(OVERPASS_ENDPOINTS[i], {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(query),
+          signal: ctrl.signal,
+        });
+        if (!res.ok) {
+          lastErr = new Error("HTTP " + res.status);
+          lastErr.status = res.status;
+          continue;
+        }
+        const json = await res.json();
+        return Array.isArray(json.elements) ? json.elements : [];
+      } catch (e) {
+        lastErr = e;
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+    throw lastErr || new Error("Overpass request failed");
+  }
+
+  /* ----- Helpers ----- */
+  function distanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371000, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+
+  function formatDistance(m) {
+    return m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1) + " km";
+  }
+
+  const TYPE_INFO = {
+    supermarket: { label: "Supermarket", emoji: "🏪" },
+    convenience: { label: "Convenience store", emoji: "🏬" },
+    greengrocer: { label: "Vegetable / fruit shop", emoji: "🥬" },
+    grocery: { label: "Grocery store", emoji: "🛒" },
+    general: { label: "General store", emoji: "🛒" },
+    marketplace: { label: "Market", emoji: "🧺" },
+  };
+
+  function typeOf(tags) {
+    if (tags.shop && TYPE_INFO[tags.shop]) return TYPE_INFO[tags.shop];
+    if (tags.amenity === "marketplace") return TYPE_INFO.marketplace;
+    return { label: "Store", emoji: "🛒" };
+  }
+
+  function addressOf(tags) {
+    const parts = [
+      [tags["addr:housenumber"], tags["addr:street"]].filter(Boolean).join(" "),
+      tags["addr:suburb"], tags["addr:city"],
+    ].filter(Boolean);
+    return parts.join(", ");
+  }
+
+  function normalizeStores(elements, origin) {
+    const seen = new Set();
+    const stores = [];
+    elements.forEach(function (el) {
+      const lat = typeof el.lat === "number" ? el.lat : (el.center && el.center.lat);
+      const lng = typeof el.lon === "number" ? el.lon : (el.center && el.center.lon);
+      if (typeof lat !== "number" || typeof lng !== "number") return;
+      const tags = el.tags || {};
+      const t = typeOf(tags);
+      const key = el.type + "/" + el.id;
+      if (seen.has(key)) return;
+      seen.add(key);
+      stores.push({
+        key: key,
+        osmType: el.type,
+        osmId: el.id,
+        lat: lat,
+        lng: lng,
+        name: tags.name || ("Unnamed " + t.label.toLowerCase()),
+        typeLabel: t.label,
+        emoji: t.emoji,
+        address: addressOf(tags),
+        hours: tags.opening_hours || "",
+        dist: distanceMeters(origin.lat, origin.lng, lat, lng),
+      });
+    });
+    stores.sort(function (a, b) { return a.dist - b.dist; });
+    return stores.slice(0, MAX_STORES);
+  }
+
+  function buildStorePopup(s) {
+    const wrap = textPopup(s.name);
+    function line(text) {
+      const d = document.createElement("div");
+      d.textContent = text;
+      wrap.appendChild(d);
+    }
+    line(s.typeLabel + " · " + formatDistance(s.dist) + " away");
+    if (s.address) line(s.address);
+    if (s.hours) line("Hours (per OSM): " + s.hours);
+    const d = document.createElement("div");
+    const a = document.createElement("a");
+    // Only numbers and fixed strings are used to build this URL.
+    a.href = "https://www.openstreetmap.org/?mlat=" + s.lat.toFixed(6) +
+      "&mlon=" + s.lng.toFixed(6) + "#map=18/" + s.lat.toFixed(6) + "/" + s.lng.toFixed(6);
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.textContent = "View on OpenStreetMap";
+    d.appendChild(a);
+    wrap.appendChild(d);
+    return wrap;
+  }
+
+  async function findNearby() {
+    if (!userLocation) {
+      setMapStatus("Please share your location first.", true);
+      return;
+    }
+    if (searching) return;
+    searching = true;
+    findNearbyBtn.disabled = true;
+
+    const radius = parseInt(radiusSelect.value, 10) || 2000;
+    ensureMap();
+    clearStoreMarkers();
+    setMapStatus("Searching for stores within " + formatDistance(radius) + "…");
+
+    try {
+      const elements = await queryOverpass(userLocation.lat, userLocation.lng, radius);
+      const stores = normalizeStores(elements, userLocation);
+
+      radiusCircle = L.circle([userLocation.lat, userLocation.lng], {
+        radius: radius, color: "#234B3A", weight: 1, fillColor: "#A8BE91", fillOpacity: 0.08,
+      }).addTo(map);
+
+      if (stores.length === 0) {
+        map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+        setMapStatus(
+          "No grocery stores found within " + formatDistance(radius) +
+          " in OpenStreetMap. Try a larger radius; the map data may be incomplete."
+        );
+        return;
+      }
+
+      const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng]]);
+      stores.forEach(function (s) {
+        L.marker([s.lat, s.lng], { icon: storeIcon("#A8BE91", s.emoji), title: s.name })
+          .addTo(storeLayer)
+          .bindPopup(buildStorePopup(s));
+        bounds.extend([s.lat, s.lng]);
+      });
+      map.fitBounds(bounds, { padding: [40, 40] });
+
+      setMapStatus(
+        "Found " + stores.length + " store" + (stores.length === 1 ? "" : "s") +
+        " within " + formatDistance(radius) + ". Nearest: " + stores[0].name +
+        " (" + formatDistance(stores[0].dist) + ")."
+      );
+    } catch (e) {
+      let t = "Could not load nearby stores. Please try again shortly.";
+      if (e && e.name === "AbortError") t = "The store search timed out. Try a smaller radius or try again.";
+      else if (e && e.status === 429) t = "The map data service is busy (rate limited). Wait a minute and try again.";
+      else if (e && (e.status === 504 || e.status === 503)) t = "The map data service is overloaded. Try a smaller radius or try again later.";
+      setMapStatus(t, true);
+    } finally {
+      searching = false;
+      findNearbyBtn.disabled = false;
+    }
+  }
+
+  /* ---------- Wire up map buttons ---------- */
+  useLocationBtn.addEventListener("click", useLocation);
+  findNearbyBtn.addEventListener("click", findNearby);
+
+  /* ---------- Sign out ---------- */
   document.getElementById("logoutBtn").addEventListener("click", async function () {
-    try { await api("/api/logout", { method: "POST" }); } catch (e) {}
+    try {
+      await api("/api/logout", { method: "POST" });
+    } catch (e) { /* redirect regardless */ }
     window.location.assign("/");
   });
 
+  /* ---------- User chip ---------- */
+  async function loadUser() {
+    try {
+      const r = await api("/api/me");
+      if (r.ok && r.data) {
+        const name = r.data.name || r.data.username || r.data.email || "You";
+        document.getElementById("userName").textContent = name;
+        document.getElementById("avatar").textContent =
+          String(name).trim().charAt(0).toUpperCase() || "?";
+      }
+    } catch (e) { /* silent — chip stays as "—" */ }
+  }
+
+  /* ---------- Init ---------- */
+  loadUser();
   load();
+
+  // Lazy-init the map only when the user scrolls it into view
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          ensureMap();
+          io.disconnect();
+        }
+      });
+    }, { rootMargin: "200px" });
+    io.observe(mapContainer);
+  }
 })();
 </script>
 </body>
